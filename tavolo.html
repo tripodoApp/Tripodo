@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gioco di Carte - Luxury Table</title>
+  <style>
+    /* RESET E BASE */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+    body {
+      height: 100vh;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* AREA DI GIOCO CIRCOLARE */
+    .game-container {
+      position: relative;
+      width: 800px;
+      height: 800px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* IL TAVOLO VERDE */
+    .table {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(#2e7d32, #1b5e20);
+      border-radius: 50%;
+      border: 12px solid #3e2723;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1;
+    }
+
+    /* CARTE SUL TAVOLO (Centro) */
+    #table-cards {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    /* CONTENITORI GIOCATORI */
+    .player {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+      transition: all 0.5s ease;
+    }
+
+    .hand {
+      display: flex;
+      gap: -10px; /* sovrapposizione leggera */
+    }
+
+    /* CARTE */
+    .card {
+      width: 70px;
+      height: auto;
+      border-radius: 5px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* EFFETTI AVVERSARI (Ventaglio) */
+    .opponent .card {
+        margin-left: -35px;
+    }
+    .opponent .card:first-child { margin-left: 0; }
+
+    /* IL MIO LAYOUT (In basso, dritto) */
+    .me {
+      bottom: 40px;
+      flex-direction: column-reverse;
+    }
+
+    .me .hand {
+        gap: 10px;
+    }
+
+    .me .card:hover {
+      transform: translateY(-20px) scale(1.1);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+      z-index: 10;
+    }
+
+    /* CONTROLLI */
+    .controls {
+      margin-top: 15px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    input { width: 60px; padding: 8px; border-radius: 4px; border: none; text-align: center; }
+    button { padding: 8px 15px; cursor: pointer; background: #f1c40f; border: none; border-radius: 4px; font-weight: bold; }
+
+    /* LOG */
+    #game-log {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      width: 250px;
+      max-height: 150px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-size: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #444;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    
+    <div class="player opponent" id="opponent-container">
+      <div class="hand" id="handOpponent"></div>
+    </div>
+
+    <div class="table">
+      <div id="table-cards"></div>
+    </div>
+
+    <div class="player me">
+      <div class="controls">
+        <form>
+          <input id="callInput" placeholder="N°" pattern="[0-9]" type="text" inputmode="numeric" maxlength="1" required>
+          <button id="callBtn" type="button">Conferma</button>
+        </form>
+      </div>
+      <div class="hand" id="my-hand"></div>
+    </div>
+
+  </div>
+
+  <div id="game-log"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const playerId = localStorage.getItem('playerId');
+    socket.emit('tableReady', playerId);
+
+    const handOpponent = document.getElementById('handOpponent');
+    const myHand = document.getElementById('my-hand');
+    const table = document.getElementById('table-cards');
+    const callInput = document.getElementById('callInput');
+    const callBtn = document.getElementById('callBtn');
+    const gameLog = document.getElementById('game-log');
+
+    // FUNZIONE PER POSIZIONARE GLI AVVERSARI A CERCHIO
+    // Nota: in questo esempio gestiamo 1 avversario fisso in alto, 
+    // ma la logica è pronta per espandersi.
+    function adjustLayout() {
+        const oppContainer = document.getElementById('opponent-container');
+        // Se hai più avversari, qui dovresti ciclare e calcolare sin/cos come nell'esempio precedente.
+        // Per ora manteniamo l'avversario standard "di fronte" (Top)
+        oppContainer.style.top = "40px";
+    }
+
+    // socket.on('initData', (playerData, gameState) => {
+    //   myHand.innerHTML = '';
+    //   table.innerHTML = '';
+    //   handOpponent.innerHTML = '';
+
+    //   // CARTE SUL TAVOLO
+    //   gameState.cardsTable.forEach(card => {
+    //     const img = document.createElement('img');
+    //     img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+    //     img.classList.add('card');
+    //     img.addEventListener('click', () => {
+    //       socket.emit('playCard', card, playerId);
+    //     });
+    //     table.appendChild(img);
+    //   });
+
+    //   // LE MIE CARTE
+    //   playerData.cardsHands.forEach(card => {
+    //     const img = document.createElement('img');
+    //     img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+    //     img.classList.add('card');
+    //     img.addEventListener('click', () => {
+    //       socket.emit('playCard', card, playerId);
+    //     });
+    //     myHand.appendChild(img);
+    //   });
+
+    //   // CARTE AVVERSARIO (Dorso)
+    //   // Usiamo le tue carte per sapere quante ne ha l'avversario (logica esistente)
+    //   playerData.cardsHands.forEach(() => {
+    //     const img = document.createElement('img');
+    //     img.src = `./img/cards/Napoletane/bg.jpg`;
+    //     img.classList.add('card');
+    //     handOpponent.appendChild(img);
+    //   });
+
+    //   adjustLayout();
+    // });
+
+    socket.on('initData', (playerData, gameState, players) => {
+    // 1. Pulizia totale
+    const container = document.querySelector('.game-container');
+    // Rimuovi tutti i vecchi player tranne quello locale se preferisci, 
+    // ma resettare tutto è più sicuro:
+    document.querySelectorAll('.player.opponent').forEach(el => el.remove());
+    myHand.innerHTML = '';
+    table.innerHTML = '';
+
+    // 2. CARTE SUL TAVOLO (Centro)
+    gameState.cardsTable.forEach(card => {
+        const img = document.createElement('img');
+        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.classList.add('card');
+        table.appendChild(img);
+    });
+
+    // 3. LE MIE CARTE (Sempre fisse in basso)
+    playerData.cardsHands.forEach(card => {
+        const img = document.createElement('img');
+        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.classList.add('card');
+        img.onclick = () => socket.emit('playCard', card, playerId);
+        myHand.appendChild(img);
+    });
+
+    // 4. POSIZIONAMENTO AVVERSARI A CERCHIO
+    // Supponiamo che gameState.allPlayers sia la lista di tutti gli ID al tavolo
+    const avversari = players.filter(player => player.playerId !== playerId);
+    const numAvversari = avversari.length;
+    
+    const raggio = 280; // Distanza dal centro tavolo
+    const centerX = container.offsetWidth / 2;
+    const centerY = container.offsetHeight / 2;
+
+    avversari.forEach((advId, index) => {
+        // Calcoliamo l'angolo: distribuiamo gli avversari nell'arco superiore (da 180° a 360°)
+        // In questo modo nessuno si sovrappone a TE che sei a 90° (in basso)
+        const startAngle = Math.PI; // Inizia da sinistra
+        const endAngle = 2 * Math.PI; // Finisce a destra
+        const angle = startAngle + (index * (endAngle - startAngle) / (numAvversari - 1 || 1));
+
+        const x = centerX + raggio * Math.cos(angle) - 50; 
+        const y = centerY + raggio * Math.sin(angle) - 50;
+
+        // Crea il div dell'avversario
+        const divOpp = document.createElement('div');
+        divOpp.className = 'player opponent';
+        divOpp.style.left = `${x}px`;
+        divOpp.style.top = `${y}px`;
+        
+        // Ruota il contenitore verso il centro
+        const rotation = (angle * 180 / Math.PI) - 270;
+        divOpp.style.transform = `rotate(${rotation}deg)`;
+
+        // Aggiungi le carte coperte (es. 3 carte)
+        const handDiv = document.createElement('div');
+        handDiv.className = 'hand';
+        playerData.cardsHands.forEach(() => {
+        const cardBack = document.createElement('img');
+            cardBack.src = `./img/cards/Napoletane/bg.jpg`;
+            cardBack.classList.add('card');
+            handDiv.appendChild(cardBack);
+      });
+
+        // Etichetta col nome/ID
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.innerText = `Giocatore ${index + 2}`;
+        label.style.transform = `rotate(${-rotation}deg)`; // Raddrizza il testo
+
+        divOpp.appendChild(handDiv);
+        divOpp.appendChild(label);
+        container.appendChild(divOpp);
+    });
+});
+
+    socket.on('gameLog', (message) => {
+      const row = document.createElement('div');
+      row.textContent = message;
+      gameLog.appendChild(row);
+      gameLog.scrollTop = gameLog.scrollHeight;
+    });
+
+    socket.on('cardOnTable', ({ card }) => {
+      const img = document.createElement('img');
+      img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+      img.classList.add('card');
+      table.appendChild(img);
+    });
+
+    socket.on('finePlayCard', () => {
+      socket.emit("aggiornaDati", playerId);
+    });
+
+    socket.on('chiamataFatta', () => {
+      socket.emit('handshakeChiamata', playerId);
+    });
+
+    socket.on('lastRound', () => {
+
+      socket.emit('prepareLastRound', playerId);
+    } )
+
+    socket.on('chiamataBanco', (valoreNegato) => {
+      if (valoreNegato != -1) {
+        callInput.pattern = `[1-${valoreNegato - 1}${valoreNegato + 1}-9]`;
+      }
+    });
+
+
+
+    socket.on('cardsLastRound', (playerData, gameState, players, carte) => {
+    // 1. Pulizia totale
+    const container = document.querySelector('.game-container');
+    // Rimuovi tutti i vecchi player tranne quello locale se preferisci, 
+    // ma resettare tutto è più sicuro:
+    document.querySelectorAll('.player.opponent').forEach(el => el.remove());
+    myHand.innerHTML = '';
+    table.innerHTML = '';
+
+    // 2. CARTE SUL TAVOLO (Centro)
+    gameState.cardsTable.forEach(card => {
+        const img = document.createElement('img');
+        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.classList.add('card');
+        table.appendChild(img);
+    });
+
+    // 3. LE MIE CARTE (Sempre fisse in basso)
+      const card = { carta : "last", valore: "last", idPlayer : playerData.idPlayer };
+        const img = document.createElement('img');
+        img.src = `./img/cards/Napoletane/bg.jpg`;
+        img.classList.add('card');
+        img.onclick = () => socket.emit('playCard', card, playerId);
+        myHand.appendChild(img);
+    
+
+    // 4. POSIZIONAMENTO AVVERSARI A CERCHIO
+    // Supponiamo che gameState.allPlayers sia la lista di tutti gli ID al tavolo
+    const avversari = players.filter(player => player.playerId !== playerId);
+    const numAvversari = avversari.length;
+    
+    const raggio = 280; // Distanza dal centro tavolo
+    const centerX = container.offsetWidth / 2;
+    const centerY = container.offsetHeight / 2;
+
+    avversari.forEach((advId, index) => {
+        // Calcoliamo l'angolo: distribuiamo gli avversari nell'arco superiore (da 180° a 360°)
+        // In questo modo nessuno si sovrappone a TE che sei a 90° (in basso)
+        const startAngle = Math.PI; // Inizia da sinistra
+        const endAngle = 2 * Math.PI; // Finisce a destra
+        const angle = startAngle + (index * (endAngle - startAngle) / (numAvversari - 1 || 1));
+
+        const x = centerX + raggio * Math.cos(angle) - 50; 
+        const y = centerY + raggio * Math.sin(angle) - 50;
+
+        // Crea il div dell'avversario
+        const divOpp = document.createElement('div');
+        divOpp.className = 'player opponent';
+        divOpp.style.left = `${x}px`;
+        divOpp.style.top = `${y}px`;
+        
+        // Ruota il contenitore verso il centro
+        const rotation = (angle * 180 / Math.PI) - 270;
+        divOpp.style.transform = `rotate(${rotation}deg)`;
+
+        // Aggiungi le carte coperte dell'avversario oppure IN QUESTO CASO
+        //ultimo giro scoperto
+        const handDiv = document.createElement('div');
+        carte.forEach( carta => {
+
+          if ( carta.idPlayer === advId.playerId ) {
+
+            handDiv.className = 'hand';
+            
+              const card = document.createElement('img');
+              card.src = `./img/cards/Napoletane/${carta.carta}.jpg`;
+              card.classList.add('card');
+              handDiv.appendChild(card);
+            
+          }
+        });
+
+        // Etichetta col nome/ID
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.innerText = `Giocatore ${index + 2}`;
+        label.style.transform = `rotate(${-rotation}deg)`; // Raddrizza il testo
+
+        divOpp.appendChild(handDiv);
+        divOpp.appendChild(label);
+        container.appendChild(divOpp);
+    });
+});
+
+
+    callBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      const value = Number(callInput.value);
+      socket.emit('callNumber', value, playerId);
+    });
+
+    window.onload = adjustLayout;
+  </script>
+</body>
+</html>

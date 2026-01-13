@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gioco di Carte - Home</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+  font-family: sans-serif;
+  background-color: #0b6623;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+  gap: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  padding: 10px 20px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+/* MODALE */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: #222;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  text-align: center;
+  position: relative;
+}
+
+.close {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#playerListCreate, #playerListJoin {
+  margin-top: 10px;
+  border-top: 1px solid white;
+  padding-top: 10px;
+  min-height: 50px;
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gioco di Carte Online</h1>
+    <button id="createBtn">Crea Partita</button>
+    <button id="joinBtn">Unisciti a Partita</button>
+  </div>
+
+  <!-- MODALE -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+
+      <div id="createRoomSection" class="modal-section hidden">
+        <h2>Crea Partita</h2>
+        <input type="text" id="roomNameInput" placeholder="Nome partita">
+        <input type="text" id="myNameInput" placeholder="Il tuo nome">
+        <button id="createRoomBtn">Crea</button>
+        <div id="playerListCreate"></div>
+        <button id="startGameBtn" class="hidden">Avvia Partita</button>
+      </div>
+
+      <div id="joinRoomSection" class="modal-section hidden">
+        <h2>Unisciti a Partita</h2>
+        <input type="text" id="joinRoomInput" placeholder="Nome partita">
+        <input type="text" id="myNameInput2" placeholder="Il tuo nome">
+        <button id="joinRoomBtn">Unisciti</button>
+        <div id="playerListJoin"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js" integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+  <script>
+  
+  const socket = io();
+
+
+  let playerId = localStorage.getItem('playerId');
+if (!playerId) {
+  socket.emit("generatePlayerID");
+ 
+}
+
+// ELEMENTI
+const modal = document.getElementById("modal");
+const closeModal = document.getElementById("closeModal");
+const createBtn = document.getElementById("createBtn");
+const joinBtn = document.getElementById("joinBtn");
+
+const createRoomSection = document.getElementById("createRoomSection");
+const joinRoomSection = document.getElementById("joinRoomSection");
+
+const roomNameInput = document.getElementById("roomNameInput");
+const myNameInput = document.getElementById("myNameInput");
+const myNameInput2 = document.getElementById("myNameInput2");
+const createRoomBtn = document.getElementById("createRoomBtn");
+const playerListCreate = document.getElementById("playerListCreate");
+const startGameBtn = document.getElementById("startGameBtn");
+
+const joinRoomInput = document.getElementById("joinRoomInput");
+const joinRoomBtn = document.getElementById("joinRoomBtn");
+const playerListJoin = document.getElementById("playerListJoin");
+
+// APRI MODALE
+createBtn.addEventListener("click", () => {
+  modal.classList.remove("hidden");
+  createRoomSection.classList.remove("hidden");
+  joinRoomSection.classList.add("hidden");
+});
+
+joinBtn.addEventListener("click", () => {
+  modal.classList.remove("hidden");
+  joinRoomSection.classList.remove("hidden");
+  createRoomSection.classList.add("hidden");
+});
+
+// CHIUDI MODALE
+closeModal.addEventListener("click", () => modal.classList.add("hidden"));
+
+// CREA ROOM
+createRoomBtn.addEventListener("click", () => {
+  const roomName = roomNameInput.value.trim();
+  const playerName = myNameInput.value.trim();
+  if (!roomName) return alert("Inserisci un nome per la partita");
+
+  
+  socket.emit("createRoom", roomName, playerId, playerName);
+});
+
+// UNISCITI A ROOM
+joinRoomBtn.addEventListener("click", () => {
+  const roomName = joinRoomInput.value.trim();
+  const playerName = myNameInput2.value.trim();
+  if (!roomName) return alert("Inserisci il nome della partita");
+
+  socket.emit("joinRoom", roomName, playerId, playerName);
+});
+
+// START GAME
+startGameBtn.addEventListener("click", () => {
+  socket.emit("startGame");
+});
+
+// SOCKET.IO LISTENER
+socket.on("roomCreated", data => {
+  playerListCreate.innerHTML = `In attesa dei giocatori:<br>${data.players.join("<br>")}`;
+  startGameBtn.classList.remove("hidden"); // solo host vede il bottone
+});
+
+socket.on("roomJoined", data => {
+  playerListJoin.innerHTML = `In attesa dell'host:<br>${data.players.join("<br>")}`;
+});
+
+socket.on("updatePlayers", data => {
+  if (data.host) {
+    playerListCreate.innerHTML = `In attesa dei giocatori:<br>${data.players.join("<br>")}`;
+  } else {
+    playerListJoin.innerHTML = `In attesa dell'host:<br>${data.players.join("<br>")}`;
+  }
+});
+
+socket.on("gameStarted", () => {
+  
+  alert("Il gioco sta per iniziare!");
+  socket.emit("redirectTable");
+});
+
+socket.on("goTable", data => {
+
+  window.location.href = data;
+})
+
+socket.on ("returnIdPlayer", idPlayer => {
+
+  localStorage.setItem('playerId', idPlayer);
+})
+
+</script>
+</body>
+</html>
+"

@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "nodemon app.js",
+    "run": "node --inspect app.js"
+  },
+  "dependencies": {
+    "crypto-md5": "^1.0.0",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.11",
+    "socket.io": "^4.8.1"
+  }
+}
