@@ -524,23 +524,17 @@ function getGiocatoreSuccessivo(playerAttuale, numberOfPlayer) {
 
 }
 
+// Cerca la porta che ti assegna Render, se non la trova usa la 3000
+const PORT = process.env.PORT || 3000;
+
+// Ascolta sulla porta corretta e sull'host 0.0.0.0
+http.listen(PORT, '0.0.0.0', function() {
+    console.log("Server in esecuzione sulla porta: " + PORT);
+});
+
+/*
+QUESTO é OK, quello orignale. COMMENTO PER PROVA RenDER
 http.listen(3000, function() {
     console.log("Server su 3000")
-})
+})*/
 
-// import {io} from 'socket.io-client';
-// import express from 'express';
-
-// const socket = io("http://localhost:5000")
-// const app = express()
-
-// app.get('/', (req, res) => {
-//   res.sendFile('chatbox.html', {root: "D:\\Desktop\\ProvaSocket\\CLIENT"})
-//   app.get('/', (req, res) => {
-//     res.sendFile('app.js', {root: "D:\\Desktop\\ProvaSocket\\CLIENT"})
-//     })
-// })
-
-// app.listen(3000, () => {
-//   console.log('Server is running on http://localhost:3000')
-// })
