@@ -120,7 +120,7 @@ function initGameState(bancoId, numberPlayers, indiceTurno) {
         giroChiamata: true,
         valoreNegato: undefined,
         indiceTurno: indiceTurno,
-        punteggi: [],
+        punteggi: {},
         isLastRound: false
     }
 

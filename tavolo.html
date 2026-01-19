@@ -101,7 +101,17 @@
       background: rgba(0,0,0,0.5);
       padding: 10px;
       border-radius: 8px;
+      display: flex;       /* Allinea i figli in riga */
+  align-items: center; /* Allinea verticalmente al centro */
+  gap: 10px;
     }
+
+    .controls form {
+  display: flex;       /* Allinea input e bottone conferma in riga */
+  align-items: center;
+  gap: 5px;            /* Spazio tra input e bottone conferma */
+  margin: 0;           /* Rimuove margini predefiniti del form */
+}
 
     input { width: 60px; padding: 8px; border-radius: 4px; border: none; text-align: center; }
     button { padding: 8px 15px; cursor: pointer; background: #f1c40f; border: none; border-radius: 4px; font-weight: bold; }
@@ -121,6 +131,83 @@
       border-radius: 8px;
       border: 1px solid #444;
     }
+
+    /* Custom per la tabella punteggi */
+.table-modal {
+  width: 80% !important; /* Più larga per ospitare la tabella */
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.table-container {
+  margin-top: 10px;
+  overflow-x: auto; /* Scroll orizzontale se ci sono molti giocatori */
+  background: rgba(0,0,0,0.5);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+  border: 1px solid rgba(241, 196, 15, 0.3);
+  text-align: center;
+}
+
+th {
+  background-color: #f1c40f;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  font-size: 0.9em;
+}
+
+tr:nth-child(even) {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Evidenzia l'ultimo round */
+tr:last-child {
+  border-bottom: 2px solid #f1c40f;
+}
+
+/*FINESTRA MODALE*/
+/* Lo sfondo della modale (copre tutto lo schermo) */
+.modal {
+  display: none; /* Nascosta di default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5); /* Sfondo semi-trasparente */
+}
+
+/* Il rettangolo bianco centrale */
+.modal-content {
+  background-color: white;
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: 50%; /* Larghezza della finestra */
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Il tasto di chiusura (X) */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+}
   </style>
 </head>
 <body>
@@ -134,9 +221,27 @@
     <div class="table">
       <div id="table-cards"></div>
     </div>
+  
+
+<div id="modalPunteggio" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+      <div class="table-container">
+        <table id="scoreTable">
+          <thead>
+            <tr id="tableHeader">
+              </tr>
+          </thead>
+          <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+  </div>
+</div>
 
     <div class="player me">
       <div class="controls">
+        <button id="btnPunteggio">Punteggio</button>
         <form>
           <input id="callInput" placeholder="N°" pattern="[0-9]" type="text" inputmode="numeric" maxlength="1" required>
           <button id="callBtn" type="button">Conferma</button>
@@ -161,6 +266,26 @@
     const callInput = document.getElementById('callInput');
     const callBtn = document.getElementById('callBtn');
     const gameLog = document.getElementById('game-log');
+    const modal = document.getElementById("modalPunteggio");
+    const btn = document.getElementById("btnPunteggio");
+    const span = document.querySelector(".close-btn");
+
+    //MODALE PUNTEGGIo 
+    btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+// Chiude la modale cliccando sulla X
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// Chiude la modale cliccando in un punto qualsiasi fuori dal rettangolo bianco
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
 
     // FUNZIONE PER POSIZIONARE GLI AVVERSARI A CERCHIO
     // Nota: in questo esempio gestiamo 1 avversario fisso in alto, 
@@ -286,6 +411,7 @@
         divOpp.appendChild(label);
         container.appendChild(divOpp);
     });
+
 });
 
     socket.on('gameLog', (message) => {
@@ -320,6 +446,65 @@
         callInput.pattern = `[1-${valoreNegato - 1}${valoreNegato + 1}-9]`;
       }
     });
+
+    socket.on('updateScores', data => {
+    updateScoreTable(data.players, data.punteggi);
+});
+
+    function updateScoreTable(players, punteggi) {
+      const header = document.getElementById('tableHeader');
+      const body = document.getElementById('tableBody');
+
+      // 1. Pulizia
+      header.innerHTML = '<th>Round</th>'; 
+      body.innerHTML = '';
+
+      // 2. Intestazione: Nomi dei giocatori
+      players.forEach(p => {
+        const th = document.createElement('th');
+        th.textContent = p.playerName;
+        header.appendChild(th);
+      });
+
+      // 3. Calcoliamo quanti round sono stati fatti (lunghezza del primo array di punteggi)
+      // Usiamo l'ID del primo giocatore per capire il numero di round
+      const primoPlayerId = players[0].playerId;
+      const numeroRound = punteggi[primoPlayerId] ? punteggi[primoPlayerId].length : 0;
+
+    // 4. Creiamo le righe per ogni round
+      for (let i = 0; i < numeroRound; i++) {
+        const tr = document.createElement('tr');
+        
+        // Colonna Numero Round
+        const tdIndex = document.createElement('td');
+        tdIndex.textContent = i + 1;
+        tr.appendChild(tdIndex);
+
+        // Colonne Punteggi Giocatori
+        players.forEach(p => {
+            const tdScore = document.createElement('td');
+            // Accediamo all'i-esimo elemento dell'array di quel giocatore
+            const score = punteggi[p.playerId][i];
+            tdScore.textContent = score !== undefined ? score : '-';
+            tr.appendChild(tdScore);
+        });
+
+        body.appendChild(tr);
+    }
+
+    // 5. RIGA TOTALI (Opzionale ma molto utile)
+    const trTotale = document.createElement('tr');
+    trTotale.style.background = 'rgba(241, 196, 15, 0.2)'; // Evidenziato oro
+    trTotale.innerHTML = '<td><strong>TOT</strong></td>';
+    
+    players.forEach(p => {
+        const tdTotal = document.createElement('td');
+        const totale = punteggi[p.playerId].reduce((a, b) => a + b, 0);
+        tdTotal.innerHTML = `<strong>${totale}</strong>`;
+        trTotale.appendChild(tdTotal);
+    });
+    body.appendChild(trTotale);
+}
 
 
 

@@ -35,12 +35,13 @@ io.on('connection', socket => {
     rooms[roomName] = {
       host: socket.id,
       players: [{ socketId: socket.id, playerId: playerId, playerName: playerName }],
-      sockets: [socket],
+      //sockets: [socket],
       playerState: [],
       gameState: {}
     };
 
     socket.join(roomName);
+    socket.userId = playerId;
     console.log(`Room creata: ${roomName} da ${socket.id}`);
 
     socket.emit('roomCreated', {
@@ -67,26 +68,24 @@ io.on('connection', socket => {
     return;
   }
 
+    socket.userId = idPlayer;
     room.players.push({ socketId: socket.id, playerId: idPlayer, playerName: playerName });
-    room.sockets.push(socket);
+    //room.sockets.push(socket);
     socket.join(roomName);
     console.log(`${socket.id} è entrato in ${roomName}`);
 
     // aggiorno tutti nella stanza
-    io.to(roomName).emit('updatePlayers', {
-      players: room.players,
-      host: false
-    });
+    io.to(roomName).emit('updatePlayers', room.players);
 
-    socket.emit('roomJoined', {
-      players: room.players
-    });
+    // socket.emit('roomJoined', {
+    //   players: room.players
+    // });
   });
 
   socket.on('redirectTable', ()=> {
 
     const roomId = getGameRoom(socket);
-    const playersCount = rooms[roomId].sockets.length;
+    const playersCount = rooms[roomId].players.length;
 
     const carte = tripodo.dividiCarte(1, rooms[roomId].players )
 
@@ -136,6 +135,7 @@ io.on('connection', socket => {
   const playerData = rooms[roomName].playerState.find( p => p.idPlayer === playerCode);
   const gameState = rooms[roomName].gameState;
 
+  socket.userId = playerCode;
   socket.emit('initData', playerData, gameState, rooms[roomName].players);
 });
 
@@ -149,40 +149,90 @@ io.on('connection', socket => {
     console.log(`Partita ${roomName} iniziata dall'host ${socket.id}`);
   });
 
-  // DISCONNESSIONE
+  //DISCONNESSIONE
+  // socket.on('disconnect', () => {
+  //   console.log('Client disconnesso:', socket.id);
+
+  //   // cerca la room in cui era
+  //   for (const roomName in rooms) {
+  //     const room = rooms[roomName];
+  //     const index = room.players.indexOf(socket.id);
+  //     if (room.players.length === 0) delete rooms[roomName];
+
+  //     if (index !== -1) {
+  //       room.players.splice(index, 1);
+
+  //       // se era host, nomina nuovo host se possibile
+  //       if (room.host === socket.id && room.players.length > 0) {
+  //         room.host = room.players[0];
+  //         io.to(room.host).emit('roomCreated', {
+  //           players: room.players,
+  //           host: true
+  //         });
+  //       }
+
+  //       // aggiorno tutti
+  //       io.to(roomName).emit('updatePlayers', {
+  //         players: room.players,
+  //         host: room.host === socket.id ? false : true
+  //       });
+
+  //       // se nessuno rimane, cancello la stanza
+  //       if (room.players.length === 0) delete rooms[roomName];
+
+  //       break;
+  //     }
+  //   }
+  // });
+
   socket.on('disconnect', () => {
-    console.log('Client disconnesso:', socket.id);
+    const userId = socket.userId; // Il tuo playerId
+    if (!userId) return;
 
-    // cerca la room in cui era
-    for (const roomName in rooms) {
-      const room = rooms[roomName];
-      const index = room.players.indexOf(socket.id);
-      if (index !== -1) {
-        room.players.splice(index, 1);
-        room.sockets = room.sockets.filter(s => s.id !== socket.id);
-
-        // se era host, nomina nuovo host se possibile
-        if (room.host === socket.id && room.players.length > 0) {
-          room.host = room.players[0];
-          io.to(room.host).emit('roomCreated', {
-            players: room.players,
-            host: true
-          });
+    // 1. Troviamo la stanza in cui si trova l'utente prima che il timeout inizi
+    let foundRoomName = null;
+    for (const name in rooms) {
+        if (rooms[name].players.some(p => p.playerId === userId)) {
+            foundRoomName = name;
+            break;
         }
-
-        // aggiorno tutti
-        io.to(roomName).emit('updatePlayers', {
-          players: room.players,
-          host: room.host === socket.id ? false : true
-        });
-
-        // se nessuno rimane, cancello la stanza
-        if (room.players.length === 0) delete rooms[roomName];
-
-        break;
-      }
     }
-  });
+
+    if (!foundRoomName) return;
+
+    // 2. Avviamo il timer di grazia
+    setTimeout(() => {
+        // Controlliamo se l'utente è tornato (nuovo socket con stesso userId)
+        const isReconnected = Array.from(io.sockets.sockets.values())
+                                   .some(s => s.userId === userId);
+
+        if (!isReconnected) {
+            const room = rooms[foundRoomName];
+            if (!room) return; // La stanza potrebbe essere stata eliminata da altri
+
+            // Rimuoviamo il giocatore
+            room.players = room.players.filter(p => p.playerId !== userId);
+
+            // Se non c'è più nessuno, eliminiamo la stanza
+            if (room.players.length === 0) {
+                delete rooms[foundRoomName];
+                console.log(`Stanza ${foundRoomName} eliminata.`);
+                return;
+            }
+
+            // Gestione Host
+            if (room.host === userId) {
+                room.host = room.players[0].playerId;
+            }
+
+            // Notifica i superstiti
+            io.to(foundRoomName).emit('updatePlayers', {
+                players: room.players,
+                host: room.host
+            });
+        }
+    }, 3000);
+});
 
   socket.on("generatePlayerID", () => {
 
@@ -193,7 +243,7 @@ io.on('connection', socket => {
 
    socket.on("playCard", (card, playerCode) => {
 
-
+      let pauseBoolean = false;
       const roomName = getGameRoomByPlayerId(playerCode);
       
       const player = Object.values(rooms[roomName].playerState).find(
@@ -240,7 +290,7 @@ io.on('connection', socket => {
       let currentRound = rooms[roomName].gameState.currentRound > rooms[roomName].gameState.totalRound ? rooms[roomName].gameState.roundToDown : rooms[roomName].gameState.roundToUp;   
 
       if ( rooms[roomName].gameState.cardsTable.length === rooms[roomName].playerState.length && currentRound === rooms[roomName].gameState.currentRoundHand ) {
-
+        
           const cartaMassima = tripodo.calcoloMassimoTurno(rooms[roomName].gameState.cardsTable);
           tripodo.setPresa(cartaMassima.idPlayer, rooms[roomName].playerState);
 
@@ -263,6 +313,12 @@ io.on('connection', socket => {
           );
           socketMessaggio(roomName, `${playerRound.playerName} deve chiamare`);
 
+          
+            io.to(roomName).emit('updateScores', { 
+          players: rooms[roomName].players, 
+        punteggi: rooms[roomName].gameState.punteggi 
+        });
+          
       } else if ( rooms[roomName].gameState.cardsTable.length === rooms[roomName].playerState.length ) {
 
           const cartaMassima = tripodo.calcoloMassimoTurno(rooms[roomName].gameState.cardsTable);
@@ -303,7 +359,7 @@ io.on('connection', socket => {
         io.to(roomName).emit("lastRound");
         return;
       }
-
+      
       io.to(roomName).emit("finePlayCard");
 
    })
@@ -480,7 +536,7 @@ io.on('connection', socket => {
   socket.on("initGame", () => {
 
     const roomId = getGameRoom(socket);
-    const playersCount = rooms[roomId].sockets.length;
+    const playersCount = rooms[roomId].players.length;
 
     rooms[roomName].players.forEach((playerSocketId, index) => {
       rooms[roomName].gameState[playerSocketId] = tripodo.initPlayer(
