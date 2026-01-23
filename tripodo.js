@@ -197,6 +197,9 @@ function calcoloPunteggio(playerState, gameState) {
       player.punteggio.push(punteggioGiocatore);
 
     }
+    player.numeroPrese = 0;
+    player.numeroChiamata = 0;
+
   })
 }
 

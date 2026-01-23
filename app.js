@@ -149,42 +149,7 @@ io.on('connection', socket => {
     console.log(`Partita ${roomName} iniziata dall'host ${socket.id}`);
   });
 
-  //DISCONNESSIONE
-  // socket.on('disconnect', () => {
-  //   console.log('Client disconnesso:', socket.id);
-
-  //   // cerca la room in cui era
-  //   for (const roomName in rooms) {
-  //     const room = rooms[roomName];
-  //     const index = room.players.indexOf(socket.id);
-  //     if (room.players.length === 0) delete rooms[roomName];
-
-  //     if (index !== -1) {
-  //       room.players.splice(index, 1);
-
-  //       // se era host, nomina nuovo host se possibile
-  //       if (room.host === socket.id && room.players.length > 0) {
-  //         room.host = room.players[0];
-  //         io.to(room.host).emit('roomCreated', {
-  //           players: room.players,
-  //           host: true
-  //         });
-  //       }
-
-  //       // aggiorno tutti
-  //       io.to(roomName).emit('updatePlayers', {
-  //         players: room.players,
-  //         host: room.host === socket.id ? false : true
-  //       });
-
-  //       // se nessuno rimane, cancello la stanza
-  //       if (room.players.length === 0) delete rooms[roomName];
-
-  //       break;
-  //     }
-  //   }
-  // });
-
+  //DISCONNESIONE
   socket.on('disconnect', () => {
     const userId = socket.userId; // Il tuo playerId
     if (!userId) return;
@@ -243,7 +208,7 @@ io.on('connection', socket => {
 
    socket.on("playCard", (card, playerCode) => {
 
-      let pauseBoolean = false;
+
       const roomName = getGameRoomByPlayerId(playerCode);
       
       const player = Object.values(rooms[roomName].playerState).find(
@@ -280,88 +245,80 @@ io.on('connection', socket => {
       //Tolgo la carta dal giocatore
       player.cardsHands = player.cardsHands.filter(c => c !== findCard);
 
-      const playerName = rooms[roomName].players.find( player => 
+      //io.to(roomName).emit("aggiornaTavolo", rooms[roomName].gameState.cardsTable);
+      io.to(roomName).emit("finePlayCard");
 
-      player.playerId === rooms[roomName].gameState.turnoAttualeId
-    )
 
-    socketMessaggio(roomName, `${playerName.playerName} ha tirato la  carta`);
+  // CONTROLLO: La mano è finita? (Tutti i giocatori hanno giocato)
+  if (rooms[roomName].gameState.cardsTable.length === rooms[roomName].playerState.length) {
+    
+    // 1. Calcola chi vince la mano immediatamente 
+    const cartaMassima = tripodo.calcoloMassimoTurno(rooms[roomName].gameState.cardsTable);
+    const playerPresa = rooms[roomName].players.find(p => p.playerId === cartaMassima.idPlayer);
 
-      let currentRound = rooms[roomName].gameState.currentRound > rooms[roomName].gameState.totalRound ? rooms[roomName].gameState.roundToDown : rooms[roomName].gameState.roundToUp;   
-
-      if ( rooms[roomName].gameState.cardsTable.length === rooms[roomName].playerState.length && currentRound === rooms[roomName].gameState.currentRoundHand ) {
+    // 2. Imposta un ritardo (es. 3 secondi) per lasciare le carte visibili
+    setTimeout(() => {
+        // --- LOGICA DI RESET (Eseguita dopo 3 secondi) ---
         
-          const cartaMassima = tripodo.calcoloMassimoTurno(rooms[roomName].gameState.cardsTable);
-          tripodo.setPresa(cartaMassima.idPlayer, rooms[roomName].playerState);
+        tripodo.setPresa(cartaMassima.idPlayer, rooms[roomName].playerState);
+        socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
+        
+        // Svuota il tavolo dopo l'attesa
+        rooms[roomName].gameState.cardsTable.length = 0;
+         // Svuota il tavolo anche sul client
+        io.to(roomName).emit("aggiornaTavolo", []);
 
-          const playerPresa = rooms[roomName].players.find( player => 
+        // Controlla se è anche la fine del Round o solo cambio mano
+        let currentRound = rooms[roomName].gameState.currentRound > rooms[roomName].gameState.totalRound 
+                           ? rooms[roomName].gameState.roundToDown 
+                           : rooms[roomName].gameState.roundToUp;
 
-            player.playerId === cartaMassima.idPlayer
-          )
 
-          socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
 
-          rooms[roomName].gameState.cardsTable.length = 0;
+        //AGGIUNGERE IF PER ULTIMO ROUND E FARE REDIRECT SCHERMATA VITTORIA
+        if (currentRound === rooms[roomName].gameState.currentRoundHand) {
 
           rooms[roomName].gameState.currentRoundHand = 1;
-
           tripodo.fineRound(rooms[roomName]);
-
           const playerRound = rooms[roomName].players.find( player => 
-
             player.playerId === rooms[roomName].gameState.turnoAttualeId
           );
           socketMessaggio(roomName, `${playerRound.playerName} deve chiamare`);
 
-          
-            io.to(roomName).emit('updateScores', { 
-          players: rooms[roomName].players, 
-        punteggi: rooms[roomName].gameState.punteggi 
-        });
-          
-      } else if ( rooms[roomName].gameState.cardsTable.length === rooms[roomName].playerState.length ) {
+          io.to(roomName).emit('updateScores', { 
+            players: rooms[roomName].players, 
+            punteggi: rooms[roomName].gameState.punteggi 
+          });
+            // FINE ROUND
+            // rooms[roomName].gameState.currentRoundHand = 1;
+            // tripodo.fineRound(rooms[roomName]);
+            // ... resto della logica fine round ...
+            // io.to(roomName).emit('updateScores', { /* ... */ });
+        } else {
+            // PROSSIMA MANO
+            rooms[roomName].gameState.currentRoundHand += 1;
+            rooms[roomName].gameState.ultimaPresa = cartaMassima.idPlayer;
+            tripodo.setTurnoPostPresa(cartaMassima.idPlayer, rooms[roomName]);
+        }
 
-          const cartaMassima = tripodo.calcoloMassimoTurno(rooms[roomName].gameState.cardsTable);
-          tripodo.setPresa(cartaMassima.idPlayer, rooms[roomName].playerState);
+        if ( rooms[roomName].gameState.isLastRound ) {
 
-          const playerPresa = rooms[roomName].players.find( player => 
+          io.to(roomName).emit("lastRound");
+          return;
+        }
 
-            player.playerId === cartaMassima.idPlayer
-          )
+        // Invia il segnale di fine giocata solo DOPO la pausa
+        io.to(roomName).emit("finePlayCard");
+        
+    }, 3000); // 3000 millisecondi = 3 secondi
 
-          socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
-          rooms[roomName].gameState.cardsTable.length = 0;
+} else {
+    // La mano non è ancora finita, passa semplicemente al prossimo giocatore
+    tripodo.prossimoTurno(rooms[roomName]);
+    io.to(roomName).emit("finePlayCard");
+}
 
-          rooms[roomName].gameState.currentRoundHand = rooms[roomName].gameState.currentRoundHand + 1;
-
-          rooms[roomName].gameState.ultimaPresa = cartaMassima.idPlayer;
-
-          tripodo.setTurnoPostPresa(cartaMassima.idPlayer, rooms[roomName]);
-
-          const playerRound = rooms[roomName].players.find( player => 
-
-            player.playerId === rooms[roomName].gameState.turnoAttualeId
-          );
-          socketMessaggio(roomName, `${playerRound.playerName} tocca a te`);
-      
-      } else {
-
-        tripodo.prossimoTurno(rooms[roomName]);
-        const playerRound = rooms[roomName].players.find( player => 
-
-            player.playerId === rooms[roomName].gameState.turnoAttualeId
-          );
-          socketMessaggio(roomName, `${playerRound.playerName} tocca a te`);
-      }
-
-      if ( rooms[roomName].gameState.isLastRound ) {
-
-        io.to(roomName).emit("lastRound");
-        return;
-      }
-      
-      io.to(roomName).emit("finePlayCard");
-
+    
    })
 
    socket.on("prepareLastRound", playerCode => {

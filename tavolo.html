@@ -414,6 +414,16 @@ window.onclick = function(event) {
 
 });
 
+socket.on('aggiornaTavolo', carteTavolo => {
+
+  const card = carteTavolo[carteTavolo.length - 1];
+        const img = document.createElement('img');
+        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.classList.add('card');
+        table.appendChild(img);
+
+});
+
     socket.on('gameLog', (message) => {
       const row = document.createElement('div');
       row.textContent = message;
