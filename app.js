@@ -103,7 +103,6 @@ io.on('connection', socket => {
     //CON QUESTO SETTO IL TURNO DE GIOCATORE PLAYER STATE
     let inizioTurno = tripodo.bancoInitGames(playersCount);
     
-   
     const banco = rooms[roomId].playerState[inizioTurno-1];
 
     rooms[roomId].gameState = tripodo.initGameState(banco.idPlayer, playersCount, inizioTurno - 1);
@@ -307,6 +306,15 @@ io.on('connection', socket => {
           return;
         }
 
+        if ( tripodo.isPartitaFinita( rooms[roomName].gameState ) ) {
+
+          const data = { 
+            players: rooms[roomName].players, 
+            punteggi: rooms[roomName].gameState.punteggi  
+          };
+
+          io.to(roomName).emit('redirect_to_game_over', data);
+        }
         // Invia il segnale di fine giocata solo DOPO la pausa
         io.to(roomName).emit("finePlayCard");
         
@@ -427,7 +435,9 @@ io.on('connection', socket => {
         counter += player.numeroChiamata;
       });
 
-      let valueValoreNegato = getValoreNegatoBanco(counter, rooms[roomName].gameState.currentRound);
+      let currentRound = rooms[roomName].gameState.currentRound > rooms[roomName].gameState.totalRound ? rooms[roomName].gameState.roundToDown : rooms[roomName].gameState.roundToUp;   
+
+      let valueValoreNegato = getValoreNegatoBanco(counter, currentRound);
       rooms[roomName].gameState.valoreNegato = valueValoreNegato;
 
       let bancoId = rooms[roomName].gameState.bancoId;

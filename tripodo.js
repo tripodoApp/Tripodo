@@ -15,9 +15,6 @@ function  initPlayer(idPlayer, numberPlayers, index, carte) {
         currentRound: 1,
         currentRoundHand: 0,
         totalRound: 40/numberPlayers,
-        //banco: false,
-        //myTurn: false,
-        //giroChiamata: true,
         index: index
     }
 
@@ -102,6 +99,13 @@ function shuffle(deck) {
 
 function bancoInitGames(numberPlayers) {
   return Math.floor(Math.random() * numberPlayers) + 1;
+}
+
+function isPartitaFinita( gameState ) {
+
+  let totalRound = gameState.totalRound*2;
+  return gameState.currentRound > totalRound ? true : false;
+
 }
 
 function initGameState(bancoId, numberPlayers, indiceTurno) {
@@ -197,6 +201,8 @@ function calcoloPunteggio(playerState, gameState) {
       player.punteggio.push(punteggioGiocatore);
 
     }
+
+    //Reset punteggio mano
     player.numeroPrese = 0;
     player.numeroChiamata = 0;
 
@@ -251,7 +257,8 @@ module.exports = {
   setPresa,
   setTurnoPostPresa,
   fineRound,
-  initPunteggi
+  initPunteggi,
+  isPartitaFinita
 };
 
 /*

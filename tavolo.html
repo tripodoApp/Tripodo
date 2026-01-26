@@ -517,6 +517,12 @@ socket.on('aggiornaTavolo', carteTavolo => {
 }
 
 
+  socket.on('redirect_to_game_over', (data) => {
+    // Salva i dati localmente o passali tramite session/query
+    sessionStorage.setItem('finalResults', JSON.stringify(data));
+    window.location.href = '/game-over.html'; // Vai alla nuova pagina
+});
+
 
     socket.on('cardsLastRound', (playerData, gameState, players, carte) => {
     // 1. Pulizia totale
