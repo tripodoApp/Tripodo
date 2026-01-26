@@ -166,6 +166,7 @@ button:active {
         <button id="createRoomBtn">Crea</button>
         <div id="playerListCreate"></div>
         <button id="startGameBtn" class="hidden">Avvia Partita</button>
+        <button id="startGameTest" class="hidden">Avvia Partita Test</button>
       </div>
 
       <div id="joinRoomSection" class="modal-section hidden">
@@ -207,6 +208,7 @@ const myNameInput2 = document.getElementById("myNameInput2");
 const createRoomBtn = document.getElementById("createRoomBtn");
 const playerListCreate = document.getElementById("playerListCreate");
 const startGameBtn = document.getElementById("startGameBtn");
+const startGameTest = document.getElementById("startGameTest");
 
 const joinRoomInput = document.getElementById("joinRoomInput");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
@@ -252,10 +254,16 @@ startGameBtn.addEventListener("click", () => {
   socket.emit("startGame");
 });
 
+// START GAME TEST
+startGameTest.addEventListener("click", () => {
+  socket.emit("startGameTest");
+});
+
 // SOCKET.IO LISTENER
 socket.on("roomCreated", data => {
   playerListCreate.innerHTML = `In attesa dei giocatori:<br>${data.players[0].playerName}<br>`;
-  startGameBtn.classList.remove("hidden"); // solo host vede il bottone
+  startGameBtn.classList.remove("hidden");
+  startGameTest.classList.remove("hidden"); // solo host vede il bottone
 });
 
 // socket.on("roomJoined", data => {
@@ -280,6 +288,12 @@ socket.on("gameStarted", () => {
   
   alert("Il gioco sta per iniziare!");
   socket.emit("redirectTable");
+});
+
+socket.on("gameStartedTest", () => {
+  
+  alert("Il gioco sta per iniziare!");
+  socket.emit("redirectTableTest", 8);
 });
 
 socket.on("goTable", data => {
