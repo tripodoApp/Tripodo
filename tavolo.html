@@ -259,6 +259,7 @@ tr:last-child {
     const socket = io();
     const playerId = localStorage.getItem('playerId');
     socket.emit('tableReady', playerId);
+    let canPlay = true;
 
     const handOpponent = document.getElementById('handOpponent');
     const myHand = document.getElementById('my-hand');
@@ -358,7 +359,16 @@ window.onclick = function(event) {
         const img = document.createElement('img');
         img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
         img.classList.add('card');
-        img.onclick = () => socket.emit('playCard', card, playerId);
+        img.onclick = () => {
+          
+          if (canPlay) { 
+            
+            socket.emit('playCard', card, playerId);
+          } else {
+            
+            console.log("Azione bloccata: il tavolo si sta aggiornando");
+          }
+        }
         myHand.appendChild(img);
     });
 
@@ -439,6 +449,12 @@ socket.on('aggiornaTavolo', carteTavolo => {
     });
 
     socket.on('finePlayCard', () => {
+      canPlay = true;
+      socket.emit("aggiornaDati", playerId);
+    });
+
+     socket.on('updateTable', () => {
+      canPlay = false;
       socket.emit("aggiornaDati", playerId);
     });
 

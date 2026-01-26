@@ -233,7 +233,6 @@ io.on('connection', socket => {
 
       } else if ( /*!findCard && rooms[roomName].gameState.isLastRound == true &&*/ card.valore === "last" && card.carta === "last") {
 
-
         const player = rooms[roomName].playerState.find(p => p.idPlayer === playerCode);
         findCard = player.cardsHands[0];
       }
@@ -245,7 +244,7 @@ io.on('connection', socket => {
       player.cardsHands = player.cardsHands.filter(c => c !== findCard);
 
       //io.to(roomName).emit("aggiornaTavolo", rooms[roomName].gameState.cardsTable);
-      io.to(roomName).emit("finePlayCard");
+      io.to(roomName).emit("updateTable");
 
 
   // CONTROLLO: La mano è finita? (Tutti i giocatori hanno giocato)
