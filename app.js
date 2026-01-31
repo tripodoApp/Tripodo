@@ -114,6 +114,7 @@ io.on('connection', socket => {
     rooms[roomId].gameState.ultimaPresa = rooms[roomId].gameState.turnoAttualeId;
     
     io.to(roomId).emit('goTable', '/tavolo.html');
+    socketMessaggio(roomId, "E' il turno di x");
  
   });
 
@@ -135,6 +136,7 @@ io.on('connection', socket => {
   const gameState = rooms[roomName].gameState;
 
   socket.userId = playerCode;
+  
   socket.emit('initData', playerData, gameState, rooms[roomName].players);
 });
 
@@ -204,7 +206,7 @@ io.on('connection', socket => {
     const userId = socket.userId; // Il tuo playerId
     if (!userId) return;
 
-    // 1. Troviamo la stanza in cui si trova l'utente prima che il timeout inizi
+    //Trovo la stanza in cui si trova l'utente
     let foundRoomName = null;
     for (const name in rooms) {
         if (rooms[name].players.some(p => p.playerId === userId)) {
@@ -215,32 +217,32 @@ io.on('connection', socket => {
 
     if (!foundRoomName) return;
 
-    // 2. Avviamo il timer di grazia
+    // Timer di attesa per far rientrare il giocatore
     setTimeout(() => {
-        // Controlliamo se l'utente è tornato (nuovo socket con stesso userId)
+        // Controllo se è tornato
         const isReconnected = Array.from(io.sockets.sockets.values())
                                    .some(s => s.userId === userId);
 
         if (!isReconnected) {
             const room = rooms[foundRoomName];
-            if (!room) return; // La stanza potrebbe essere stata eliminata da altri
+            if (!room) return; // Verifico che la stanza effettivamente ancora esista per non fare spaccare tutto
 
             // Rimuoviamo il giocatore
             room.players = room.players.filter(p => p.playerId !== userId);
 
-            // Se non c'è più nessuno, eliminiamo la stanza
+            // Se la stanza è vuota, la elimino
             if (room.players.length === 0) {
                 delete rooms[foundRoomName];
                 console.log(`Stanza ${foundRoomName} eliminata.`);
                 return;
             }
 
-            // Gestione Host
+            // Cambio host stanza se il giocatore che è uscito è l'host
             if (room.host === userId) {
                 room.host = room.players[0].playerId;
             }
 
-            // Notifica i superstiti
+            // Notifica gli altri ( questo me lo ha detto Gemini, devo capire un attimo meglio)
             io.to(foundRoomName).emit('updatePlayers', {
                 players: room.players,
                 host: room.host
@@ -298,26 +300,26 @@ io.on('connection', socket => {
       io.to(roomName).emit("updateTable");
 
 
-  // CONTROLLO: La mano è finita? (Tutti i giocatori hanno giocato)
+  // Tutti hanno giocato
   if (rooms[roomName].gameState.cardsTable.length === rooms[roomName].playerState.length) {
     
-    // 1. Calcola chi vince la mano immediatamente 
+    //Calcolo presa
     const cartaMassima = tripodo.calcoloMassimoTurno(rooms[roomName].gameState.cardsTable);
     const playerPresa = rooms[roomName].players.find(p => p.playerId === cartaMassima.idPlayer);
 
-    // 2. Imposta un ritardo (es. 3 secondi) per lasciare le carte visibili
+    //TIMEOUT
     setTimeout(() => {
-        // --- LOGICA DI RESET (Eseguita dopo 3 secondi) ---
+        
         
         tripodo.setPresa(cartaMassima.idPlayer, rooms[roomName].playerState);
         socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
         
-        // Svuota il tavolo dopo l'attesa
+        // Svuto il tavolo
         rooms[roomName].gameState.cardsTable.length = 0;
-         // Svuota il tavolo anche sul client
+         // Mando al client il tavolo
         io.to(roomName).emit("aggiornaTavolo", []);
 
-        // Controlla se è anche la fine del Round o solo cambio mano
+        // Controllo se fine round o fine mano
         let currentRound = rooms[roomName].gameState.currentRound > rooms[roomName].gameState.totalRound 
                            ? rooms[roomName].gameState.roundToDown 
                            : rooms[roomName].gameState.roundToUp;
@@ -365,13 +367,13 @@ io.on('connection', socket => {
 
           io.to(roomName).emit('redirect_to_game_over', data);
         }
-        // Invia il segnale di fine giocata solo DOPO la pausa
+        //FINE PLAY CARD
         io.to(roomName).emit("finePlayCard");
         
-    }, 3000); // 3000 millisecondi = 3 secondi
+    }, 3000);
 
 } else {
-    // La mano non è ancora finita, passa semplicemente al prossimo giocatore
+    //La mano non è finita, tocca al giocatore successivo
     tripodo.prossimoTurno(rooms[roomName]);
     io.to(roomName).emit("finePlayCard");
 }
