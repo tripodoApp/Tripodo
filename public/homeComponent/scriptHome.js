@@ -1,10 +1,8 @@
 const socket = io();
 
-
-  let playerId = localStorage.getItem('playerId');
+let playerId = localStorage.getItem('playerId');
 if (!playerId) {
   socket.emit("generatePlayerID");
- 
 }
 
 // ELEMENTI
@@ -50,8 +48,15 @@ createRoomBtn.addEventListener("click", () => {
   const playerName = myNameInput.value.trim();
   if (!roomName) return alert("Inserisci un nome per la partita");
 
-  
-  socket.emit("createRoom", roomName, playerId, playerName);
+  const payload = {
+    roomName: roomName,
+    player: {
+        playerId: playerId,
+        playerName: playerName
+    }
+};
+
+  socket.emit("createRoom", payload);
 });
 
 // UNISCITI A ROOM

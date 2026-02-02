@@ -92,7 +92,7 @@ window.onclick = function(event) {
     // 2. CARTE SUL TAVOLO (Centro)
     gameState.cardsTable.forEach(card => {
         const img = document.createElement('img');
-        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.src = `/public/img/cards/Napoletane/${card.carta}.jpg`;
         img.classList.add('card');
         table.appendChild(img);
     });
@@ -100,7 +100,7 @@ window.onclick = function(event) {
     // 3. LE MIE CARTE (Sempre fisse in basso)
     playerData.cardsHands.forEach(card => {
         const img = document.createElement('img');
-        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.src = `/public/img/cards/Napoletane/${card.carta}.jpg`;
         img.classList.add('card');
         img.onclick = () => {
           
@@ -149,7 +149,7 @@ window.onclick = function(event) {
         handDiv.className = 'hand';
         playerData.cardsHands.forEach(() => {
         const cardBack = document.createElement('img');
-            cardBack.src = `./img/cards/Napoletane/bg.jpg`;
+            cardBack.src = `/public/img/cards/Napoletane/bg.jpg`;
             cardBack.classList.add('card');
             handDiv.appendChild(cardBack);
       });
@@ -172,7 +172,7 @@ socket.on('aggiornaTavolo', carteTavolo => {
 
   const card = carteTavolo[carteTavolo.length - 1];
         const img = document.createElement('img');
-        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.src = `/public/img/cards/Napoletane/${card.carta}.jpg`;
         img.classList.add('card');
         table.appendChild(img);
 
@@ -187,7 +187,7 @@ socket.on('aggiornaTavolo', carteTavolo => {
 
     socket.on('cardOnTable', ({ card }) => {
       const img = document.createElement('img');
-      img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+      img.src = `/public/img/cards/Napoletane/${card.carta}.jpg`;
       img.classList.add('card');
       table.appendChild(img);
     });
@@ -296,7 +296,7 @@ socket.on('aggiornaTavolo', carteTavolo => {
     // 2. CARTE SUL TAVOLO (Centro)
     gameState.cardsTable.forEach(card => {
         const img = document.createElement('img');
-        img.src = `./img/cards/Napoletane/${card.carta}.jpg`;
+        img.src = `/public/img/cards/Napoletane/${card.carta}.jpg`;
         img.classList.add('card');
         table.appendChild(img);
     });
@@ -304,7 +304,7 @@ socket.on('aggiornaTavolo', carteTavolo => {
     // 3. LE MIE CARTE (Sempre fisse in basso)
       const card = { carta : "last", valore: "last", idPlayer : playerData.idPlayer };
         const img = document.createElement('img');
-        img.src = `./img/cards/Napoletane/bg.jpg`;
+        img.src = `/public/img/cards/Napoletane/bg.jpg`;
         img.classList.add('card');
         img.onclick = () => socket.emit('playCard', card, playerId);
         myHand.appendChild(img);
@@ -349,7 +349,7 @@ socket.on('aggiornaTavolo', carteTavolo => {
             handDiv.className = 'hand';
             
               const card = document.createElement('img');
-              card.src = `./img/cards/Napoletane/${carta.carta}.jpg`;
+              card.src = `/public/img/cards/Napoletane/${carta.carta}.jpg`;
               card.classList.add('card');
               handDiv.appendChild(card);
             

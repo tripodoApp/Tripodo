@@ -1,6 +1,6 @@
 const express  = require('express');
 const app = express();
-const tripodo = require('./tripodo')
+const tripodo = require('./src/utils/tripodo')
 
 const md5 = require('crypto-md5');
 
@@ -14,7 +14,7 @@ var io = require('socket.io')(http);
 app.use(express.static(path.join(__dirname, '')));
 
  app.get('/', (req, res) => {
-   res.sendFile('home.html', {root: path.join(__dirname)})
+   res.sendFile('./public/homeComponent/home.html', {root: path.join(__dirname)})
  })
 
 
@@ -24,9 +24,13 @@ io.on('connection', socket => {
 
   console.log('Nuovo client:', socket.id);
   
-
   // CREA ROOM
-  socket.on('createRoom', (roomName, playerId, playerName) => {
+  socket.on('createRoom', data => {
+
+    const roomName = data.roomName;
+    const playerId = data.playerId;
+    const playerName = data.playerName;
+
     if (rooms[roomName]) {
       socket.emit('errorMsg', 'Room già esistente!');
       return;
@@ -44,10 +48,12 @@ io.on('connection', socket => {
     socket.userId = playerId;
     console.log(`Room creata: ${roomName} da ${socket.id}`);
 
-    socket.emit('roomCreated', {
+    const payload = {
       players: rooms[roomName].players,
       host: true
-    });
+    }
+    
+    socket.emit('roomCreated', payload);
   });
 
   // JOIN ROOM
@@ -70,16 +76,12 @@ io.on('connection', socket => {
 
     socket.userId = idPlayer;
     room.players.push({ socketId: socket.id, playerId: idPlayer, playerName: playerName });
-    //room.sockets.push(socket);
     socket.join(roomName);
     console.log(`${socket.id} è entrato in ${roomName}`);
 
     // aggiorno tutti nella stanza
     io.to(roomName).emit('updatePlayers', room.players);
 
-    // socket.emit('roomJoined', {
-    //   players: room.players
-    // });
   });
 
   socket.on('redirectTable', ()=> {
@@ -113,7 +115,7 @@ io.on('connection', socket => {
 
     rooms[roomId].gameState.ultimaPresa = rooms[roomId].gameState.turnoAttualeId;
     
-    io.to(roomId).emit('goTable', '/tavolo.html');
+    io.to(roomId).emit('goTable', './public/tavoloComponent/tavolo.html');
     socketMessaggio(roomId, "E' il turno di x");
  
   });
