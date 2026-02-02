@@ -326,7 +326,7 @@ io.on('connection', socket => {
 
 
 
-        //AGGIUNGERE IF PER ULTIMO ROUND E FARE REDIRECT SCHERMATA VITTORIA
+        //FINE ROUND
         if (currentRound === rooms[roomName].gameState.currentRoundHand) {
 
           rooms[roomName].gameState.currentRoundHand = 1;
@@ -350,6 +350,8 @@ io.on('connection', socket => {
             rooms[roomName].gameState.currentRoundHand += 1;
             rooms[roomName].gameState.ultimaPresa = cartaMassima.idPlayer;
             tripodo.setTurnoPostPresa(cartaMassima.idPlayer, rooms[roomName]);
+            const player = rooms[roomName].players.find(p => p.playerId === rooms[roomName].gameState.turnoAttualeId);
+            socketMessaggio(roomName, `Tocca a ${player.playerName}`)
         }
 
         if ( rooms[roomName].gameState.isLastRound ) {
@@ -375,6 +377,8 @@ io.on('connection', socket => {
 } else {
     //La mano non è finita, tocca al giocatore successivo
     tripodo.prossimoTurno(rooms[roomName]);
+    const player = rooms[roomName].players.find(p => p.playerId === rooms[roomName].gameState.turnoAttualeId);
+    socketMessaggio(roomName, `Tocca a ${player.playerName}`)
     io.to(roomName).emit("finePlayCard");
 }
 
@@ -453,9 +457,11 @@ io.on('connection', socket => {
 
     if ( player.idPlayer === rooms[roomName].gameState.bancoId ) {
 
-      if ( valueCall == rooms[roomName].gameState.valoreNegato )
+      if ( valueCall === rooms[roomName].gameState.valoreNegato ) {
 
+        socketMessaggio(roomName, `Non puoi dire ${valueCall}` )
         return;
+      }
     }
 
     player.numeroChiamata = valueCall;

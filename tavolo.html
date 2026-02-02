@@ -414,8 +414,9 @@ window.onclick = function(event) {
         // Etichetta col nome/ID
         const label = document.createElement('div');
         label.className = 'label';
-        label.innerText = `Giocatore ${index + 2}`;
-        label.style.transform = `rotate(${-rotation}deg)`; // Raddrizza il testo
+        label.innerText = `${advId.playerName}`;
+        label.style.transform = `rotate(${-rotation}deg)`;
+        label.style.color = "white"  // Raddrizza il testo
 
         divOpp.appendChild(handDiv);
         divOpp.appendChild(label);
