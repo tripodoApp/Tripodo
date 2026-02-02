@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Gioco di Carte - Home</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
+  <link rel="stylesheet" href="./styleHome.css">
+  <!-- <style>
    body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   /* Sfondo scuro coordinato con il gioco */
@@ -145,7 +145,7 @@ button:active {
   display: none !important;
 }
 
-  </style>
+  </style> -->
 </head>
 <body>
   <div class="container">
@@ -182,7 +182,8 @@ button:active {
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js" integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
-  <script>
+  <script src="scriptHome.js"></script>
+  <!-- <script>
   
   const socket = io();
 
@@ -306,6 +307,6 @@ socket.on ("returnIdPlayer", idPlayer => {
   localStorage.setItem('playerId', idPlayer);
 })
 
-</script>
+</script> -->
 </body>
 </html>
