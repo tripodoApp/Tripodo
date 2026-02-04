@@ -1,6 +1,6 @@
 const socket = io();
 
-let playerId = localStorage.getItem('playerId');
+const playerId = localStorage.getItem('playerId');
 if (!playerId) {
   socket.emit("generatePlayerID");
 }
@@ -55,7 +55,6 @@ createRoomBtn.addEventListener("click", () => {
         playerName: playerName
     }
 };
-
   socket.emit("createRoom", payload);
 });
 
@@ -65,7 +64,14 @@ joinRoomBtn.addEventListener("click", () => {
   const playerName = myNameInput2.value.trim();
   if (!roomName) return alert("Inserisci il nome della partita");
 
-  socket.emit("joinRoom", roomName, playerId, playerName);
+  const payload = {
+    roomName: roomName,
+    player: {
+      idPlayer : playerId,
+      playerName: playerName
+    }
+  }
+  socket.emit("joinRoom", payload);
 });
 
 // START GAME
@@ -85,21 +91,18 @@ socket.on("roomCreated", data => {
   startGameTest.classList.remove("hidden"); // solo host vede il bottone
 });
 
-// socket.on("roomJoined", data => {
-//   playerListJoin.innerHTML = `In attesa dell'host:<br>${data.players.playerName.join("<br>")}`;
-// });
+socket.on("updatePlayers", data => {
 
-socket.on("updatePlayers", players => {
+  const players = data.players;
 
   playerListJoin.innerHTML = `In attesa dei giocatori:<br>`;
   playerListCreate.innerHTML = `In attesa dell'host:<br>`;
 
-    players.forEach(element => {
+  players.forEach(element => {
 
-      playerListCreate.innerHTML += `${element.playerName}<br>`;
-      playerListJoin.innerHTML += `${element.playerName}<br>`;
-      
-    });
+    playerListCreate.innerHTML += `${element.playerName}<br>`;
+    playerListJoin.innerHTML += `${element.playerName}<br>`;
+  });
 
 });
 
@@ -109,12 +112,14 @@ socket.on("gameStarted", () => {
   socket.emit("redirectTable");
 });
 
+//TEST
 socket.on("gameStartedTest", () => {
   
   alert("Il gioco sta per iniziare!");
   socket.emit("redirectTableTest", 21);
 });
 
+//REDIRECT TAVOLO
 socket.on("goTable", data => {
 
   window.location.href = data;
@@ -124,4 +129,13 @@ socket.on ("returnIdPlayer", idPlayer => {
 
   localStorage.setItem('playerId', idPlayer);
 })
+
+//ERRORE SOCKET
+socket.on("error", (error) => {
+
+    console.error(`Errore [${error.code}]: ${error.message}`);
+  
+    // ALERT DI PROVA
+    alert(`Ops! ${error.message}`); 
+});
 

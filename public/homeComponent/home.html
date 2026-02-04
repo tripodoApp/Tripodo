@@ -1,312 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <title>Gioco di Carte - Home</title>
-  <link rel="stylesheet" href="public\homeComponent\styleHome.css">
-  <!-- <style>
-   body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  /* Sfondo scuro coordinato con il gioco */
-  background: #1a1a1a; 
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  overflow: hidden;
-}
-
-.container {
-  text-align: center;
-  gap: 25px;
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-  /* Effetto vetro/tavolo */
-  background: radial-gradient(#2e7d32, #1b5e20);
-  border-radius: 50%; /* Richiama la forma circolare del tavolo */
-  width: 500px;
-  height: 500px;
-  justify-content: center;
-  border: 12px solid #3e2723;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.4);
-}
-
-h1 {
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-  margin-bottom: 10px;
-}
-
-/* INPUT STILE GIOCO */
-input {
-  width: 80%;
-  padding: 10px;
-  margin: 5px auto;
-  border-radius: 4px;
-  border: none;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.9);
-  font-weight: bold;
-}
-
-/* BOTTONI (Giallo/Oro come nel gioco) */
-button {
-  padding: 12px 25px;
-  cursor: pointer;
-  margin: 10px;
-  background: #f1c40f; 
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  text-transform: uppercase;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 0 #c29d0b;
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #c29d0b;
-  background: #f39c12;
-}
-
-button:active {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 #c29d0b;
-}
-
-/* MODALE */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-}
-
-.modal.hidden {
-  display: none;
-}
-
-.modal-content {
-  background-color: #222;
-  padding: 30px;
-  border-radius: 15px;
-  width: 400px;
-  text-align: center;
-  position: relative;
-  border: 2px solid #f1c40f;
-  box-shadow: 0 0 30px rgba(241, 196, 15, 0.2);
-}
-
-.close {
-  position: absolute;
-  right: 20px;
-  top: 15px;
-  cursor: pointer;
-  font-size: 28px;
-  color: #f1c40f;
-  line-height: 1;
-}
-
-.modal-section {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.modal-section h2 {
-  margin-top: 0;
-  color: #f1c40f;
-}
-
-/* LISTA GIOCATORI */
-#playerListCreate, #playerListJoin {
-  margin-top: 15px;
-  border-top: 1px solid rgba(255,255,255,0.2);
-  padding-top: 15px;
-  min-height: 50px;
-  font-style: italic;
-  color: #bdc3c7;
-  background: rgba(0,0,0,0.3);
-  border-radius: 5px;
-}
-
-/* Utility */
-.hidden {
-  display: none !important;
-}
-
-  </style> -->
-</head>
-<body>
-  <div class="container">
-    <h1>Tripodo</h1>
-    <button id="createBtn">Crea Partita</button>
-    <button id="joinBtn">Unisciti a Partita</button>
-  </div>
-
-  <!-- MODALE -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <span id="closeModal" class="close">&times;</span>
-
-      <div id="createRoomSection" class="modal-section hidden">
-        <h2>Crea Partita</h2>
-        <input type="text" id="roomNameInput" placeholder="Nome partita">
-        <input type="text" id="myNameInput" placeholder="Il tuo nome">
-        <button id="createRoomBtn">Crea</button>
-        <div id="playerListCreate"></div>
-        <button id="startGameBtn" class="hidden">Avvia Partita</button>
-        <button id="startGameTest" class="hidden">Avvia Partita Test</button>
-      </div>
-
-      <div id="joinRoomSection" class="modal-section hidden">
-        <h2>Unisciti a Partita</h2>
-        <input type="text" id="joinRoomInput" placeholder="Nome partita">
-        <input type="text" id="myNameInput2" placeholder="Il tuo nome">
-        <button id="joinRoomBtn">Unisciti</button>
-        <div id="playerListJoin"></div>
-      </div>
-
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gioco di Carte - Home</title>
+    <link rel="stylesheet" href="public\homeComponent\styleHome.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Tripodo</h1>
+      <button id="createBtn">Crea Partita</button>
+      <button id="joinBtn">Unisciti a Partita</button>
     </div>
-  </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js" integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
-  <script src="public\homeComponent\scriptHome.js"></script>
-  <!-- <script>
-  
-  const socket = io();
+    <!-- MODALE -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-content">
+        <span id="closeModal" class="close">&times;</span>
 
+        <div id="createRoomSection" class="modal-section hidden">
+          <h2>Crea Partita</h2>
+          <input type="text" id="roomNameInput" placeholder="Nome partita" />
+          <input type="text" id="myNameInput" placeholder="Il tuo nome" />
+          <button id="createRoomBtn">Crea</button>
+          <div id="playerListCreate"></div>
+          <button id="startGameBtn" class="hidden">Avvia Partita</button>
+          <button id="startGameTest" class="hidden">Avvia Partita Test</button>
+        </div>
 
-  let playerId = localStorage.getItem('playerId');
-if (!playerId) {
-  socket.emit("generatePlayerID");
- 
-}
+        <div id="joinRoomSection" class="modal-section hidden">
+          <h2>Unisciti a Partita</h2>
+          <input type="text" id="joinRoomInput" placeholder="Nome partita" />
+          <input type="text" id="myNameInput2" placeholder="Il tuo nome" />
+          <button id="joinRoomBtn">Unisciti</button>
+          <div id="playerListJoin"></div>
+        </div>
+      </div>
+    </div>
 
-// ELEMENTI
-const modal = document.getElementById("modal");
-const closeModal = document.getElementById("closeModal");
-const createBtn = document.getElementById("createBtn");
-const joinBtn = document.getElementById("joinBtn");
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"
+      integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
 
-const createRoomSection = document.getElementById("createRoomSection");
-const joinRoomSection = document.getElementById("joinRoomSection");
-
-const roomNameInput = document.getElementById("roomNameInput");
-const myNameInput = document.getElementById("myNameInput");
-const myNameInput2 = document.getElementById("myNameInput2");
-const createRoomBtn = document.getElementById("createRoomBtn");
-const playerListCreate = document.getElementById("playerListCreate");
-const startGameBtn = document.getElementById("startGameBtn");
-const startGameTest = document.getElementById("startGameTest");
-
-const joinRoomInput = document.getElementById("joinRoomInput");
-const joinRoomBtn = document.getElementById("joinRoomBtn");
-const playerListJoin = document.getElementById("playerListJoin");
-
-// APRI MODALE
-createBtn.addEventListener("click", () => {
-  modal.classList.remove("hidden");
-  createRoomSection.classList.remove("hidden");
-  joinRoomSection.classList.add("hidden");
-});
-
-joinBtn.addEventListener("click", () => {
-  modal.classList.remove("hidden");
-  joinRoomSection.classList.remove("hidden");
-  createRoomSection.classList.add("hidden");
-});
-
-// CHIUDI MODALE
-closeModal.addEventListener("click", () => modal.classList.add("hidden"));
-
-// CREA ROOM
-createRoomBtn.addEventListener("click", () => {
-  const roomName = roomNameInput.value.trim();
-  const playerName = myNameInput.value.trim();
-  if (!roomName) return alert("Inserisci un nome per la partita");
-
-  
-  socket.emit("createRoom", roomName, playerId, playerName);
-});
-
-// UNISCITI A ROOM
-joinRoomBtn.addEventListener("click", () => {
-  const roomName = joinRoomInput.value.trim();
-  const playerName = myNameInput2.value.trim();
-  if (!roomName) return alert("Inserisci il nome della partita");
-
-  socket.emit("joinRoom", roomName, playerId, playerName);
-});
-
-// START GAME
-startGameBtn.addEventListener("click", () => {
-  socket.emit("startGame");
-});
-
-// START GAME TEST
-startGameTest.addEventListener("click", () => {
-  socket.emit("startGameTest");
-});
-
-// SOCKET.IO LISTENER
-socket.on("roomCreated", data => {
-  playerListCreate.innerHTML = `In attesa dei giocatori:<br>${data.players[0].playerName}<br>`;
-  startGameBtn.classList.remove("hidden");
-  startGameTest.classList.remove("hidden"); // solo host vede il bottone
-});
-
-// socket.on("roomJoined", data => {
-//   playerListJoin.innerHTML = `In attesa dell'host:<br>${data.players.playerName.join("<br>")}`;
-// });
-
-socket.on("updatePlayers", players => {
-
-  playerListJoin.innerHTML = `In attesa dei giocatori:<br>`;
-  playerListCreate.innerHTML = `In attesa dell'host:<br>`;
-
-    players.forEach(element => {
-
-      playerListCreate.innerHTML += `${element.playerName}<br>`;
-      playerListJoin.innerHTML += `${element.playerName}<br>`;
-      
-    });
-
-});
-
-socket.on("gameStarted", () => {
-  
-  alert("Il gioco sta per iniziare!");
-  socket.emit("redirectTable");
-});
-
-socket.on("gameStartedTest", () => {
-  
-  alert("Il gioco sta per iniziare!");
-  socket.emit("redirectTableTest", 21);
-});
-
-socket.on("goTable", data => {
-
-  window.location.href = data;
-})
-
-socket.on ("returnIdPlayer", idPlayer => {
-
-  localStorage.setItem('playerId', idPlayer);
-})
-
-</script> -->
-</body>
+    <script src="public\homeComponent\scriptHome.js"></script>
+  </body>
 </html>
