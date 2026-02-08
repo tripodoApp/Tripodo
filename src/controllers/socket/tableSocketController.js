@@ -69,7 +69,8 @@ module.exports = (io, socket, rooms) => {
         );
         findCard = player.cardsHands[0];
       }
-  
+      
+      clearTimeout(rooms[roomName].gameState.turnTimer);
       //Aggiungo la carta al tavolo
       rooms[roomName].gameState.cardsTable.push(findCard);
   
@@ -158,6 +159,7 @@ module.exports = (io, socket, rooms) => {
           (p) => p.playerId === rooms[roomName].gameState.turnoAttualeId,
         );
         socketMessaggio(roomName, `Tocca a ${player.playerName}`, io);
+        startTurn(player.playerId, rooms[roomName], roomName, io, player.socketId);
         io.to(roomName).emit("finePlayCard");
       }
     };
@@ -288,7 +290,9 @@ module.exports = (io, socket, rooms) => {
       socketMessaggio(roomName, `${playerName.playerName} e' il tuo turno`, io);
   
       //rooms[roomName].gameState.turnoAttualeId = turnoSuccessivo.idPlayer
-  
+      const playerTimeout = rooms[roomName].players.find(
+          (p) => p.playerId === rooms[roomName].gameState.turnoAttualeId,
+        );
       //CASO BANCO
       if (
         rooms[roomName].gameState.turnoAttualeId ===
@@ -313,15 +317,17 @@ module.exports = (io, socket, rooms) => {
         const socketBanco = Object.values(rooms[roomName].players).find(
           (p) => p.playerId === bancoId,
         );
-  
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, io, playerTimeout.socketId, true)
         io.to(socketBanco.socketId).emit("chiamataBanco", {valoreNegato: valueValoreNegato});
   
         //io.to(roomName).emit("chiamataFatta");
       } else if (player.idPlayer === rooms[roomName].gameState.bancoId) {
         rooms[roomName].gameState.giroChiamata = false;
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, io, playerTimeout.socketId, true)
         //io.to(roomName).emit("chiamataFatta");
       } else {
         //io.to(roomName).emit("chiamataFatta");
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, io, playerTimeout.socketId, true)
       }
   
       //Aggiorno ultima chiamata e turno
@@ -345,7 +351,7 @@ module.exports = (io, socket, rooms) => {
   socket.on("initGame", initGame);
   socket.on("prepareLastRound", prepareLastRound);
   socket.on("aggiornaDati", aggiornaDati);
-}
+  }
 
 function getGameRoom(socket) {
   return [...socket.rooms].find((room) => room !== socket.id);
@@ -359,3 +365,44 @@ function getGameRoomByPlayerId(playerCode, rooms) {
   function socketMessaggio(roomName, messaggio, io) {
     io.to(roomName).emit("gameLog", {messaggio: messaggio});
   }
+
+  function startTurn(playerId, room, roomId, io, socketId, boolean) {
+    // 1. Avvisa tutti che è iniziato il turno e il tempo è 30s
+    
+    socketMessaggio(roomId, "Il giocatore" + playerId + "ha 30 secondi", io )
+
+    // 2. Cancella eventuali timer precedenti per sicurezza
+    clearTimeout(room.gameState.turnTimer);
+
+    if ( boolean ) {
+      // 3. Fissa la "scadenza" a 30 secondi
+      turnTimer = setTimeout(() => {
+        handleTimeoutCall(playerId, room, io,socketId);
+      }, 5000); 
+    } else {
+      // 3. Fissa la "scadenza" a 30 secondi
+      turnTimer = setTimeout(() => {
+        handleTimeout(playerId, room, io,socketId);
+      }, 5000); 
+    }
+    
+}
+
+function handleTimeoutCall(playerId, room, io, socketId) {
+    
+  const player = room.playerState.find(p => p.idPlayer === playerId);
+  const carta = player.cardsHands[0];
+  io.to(socketId).emit("playCardHandShake", {card: carta, playerCode : playerId});
+}
+
+function handleTimeout(playerId, room, io, socketId) {
+    
+  const player = room.playerState.find(p => p.idPlayer === playerId);
+  const carta = player.cardsHands[0];
+  io.to(socketId).emit("playCardHandShake", {card: carta, playerCode : playerId});
+}
+
+// function playCardLogic(room, roomName, card, playerId) {
+
+
+// }

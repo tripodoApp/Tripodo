@@ -1,3 +1,4 @@
+const { Socket } = require('socket.io');
 const enumCarte = require('./EnumCarte')
 
 const numberCard = 40;
@@ -45,12 +46,6 @@ function prossimoBanco(indice, sizePlayer) {
   return (indice + 1) % sizePlayer;
 }
 
-function prepareGame(numberPlayers) {
-
-    totalRound = 40/numberPlayers;
-    initPlayer(idPlayer, totalRound, numberPlayers)
-    
-}
 
 function dividiCarte(currentRound, players ) {
   
@@ -73,13 +68,6 @@ function dividiCarte(currentRound, players ) {
     return cardForPlayer;
 }
 
-// function createDeck() {
-//   const deck = [];
-//   for (let i = 1; i <= 40; i++) {
-//     deck.push(i);
-//   }
-//   return deck;
-// }
 
 function createDeck() {
   const deck = [];
@@ -135,7 +123,8 @@ function initGameState(bancoId, numberPlayers, indiceTurno) {
         valoreNegato: undefined,
         indiceTurno: indiceTurno,
         punteggi: {},
-        isLastRound: false
+        isLastRound: false,
+        turnTimer: 0
     }
 
     return gameState;
@@ -257,7 +246,6 @@ function  initPunteggi ( gameState, playerState) {
 
 
 module.exports = {
-  
   dividiCarte, 
   initPlayer,
   bancoInitGames,
@@ -270,32 +258,5 @@ module.exports = {
   fineRound,
   initPunteggi,
   isPartitaFinita, 
-  getValoreNegatoBanco
+  getValoreNegatoBanco,
 };
-
-/*
-1)Avvio del gioco:
-
--Leggo il numero di giocatori
--Posso settare il massimo di giri: numero carte/numero giocatori
--Comincio il turno
-
-Regole per metodi di controllo:
-
-1) impostaNumeroChiamateRound
-2) controllo numeroChiamateRoundBanco ----> Chiamata minima/max
-
-Cosa deve contenere il pacchetto dati che gira nella partita ? 
-
-Oggetto Player:
-
--idPlayer
--carteInMano
--numeroPrese
--numeroChiamate
--punteggio
--giroCorrente
--giriTotali
--cartaGiocata
-
-*/

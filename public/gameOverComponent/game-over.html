@@ -310,13 +310,6 @@ tr:last-child {
             window.location.href = '/'; // Redirect alla home
         }
 
-        // // Esempio di ricezione dati finali (se non passati via URL/Query)
-        // socket.on('game_results_data', (data) => {
-        //     updateScoreTable(data.players, data.punteggi)
-        //     // Qui invochi i tuoi metodi esistenti per popolare #scores-body
-        //     // buildScoreTable(data.allScores);
-        // });
-
         function updateScoreTable(players, punteggi) {
           const header = document.getElementById('tableHeader');
           const body = document.getElementById('tableBody');

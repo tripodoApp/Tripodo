@@ -180,6 +180,11 @@ socket.on("chiamataBanco", data => {
   }
 });
 
+socket.on("playCardHandShake", data => {
+
+  socket.emit("playCard", {card: data.card, playerCode : data.playerCode})
+});
+
 socket.on("updateScores", (data) => {
   updateScoreTable(data.players, data.punteggi);
 });
