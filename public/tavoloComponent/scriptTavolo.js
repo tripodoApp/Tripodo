@@ -244,7 +244,7 @@ function updateScoreTable(players, punteggi) {
 socket.on("redirect_to_game_over", (data) => {
   // Salva i dati localmente o passali tramite session/query
   sessionStorage.setItem("finalResults", JSON.stringify(data));
-  window.location.href = "/game-over.html"; // Vai alla nuova pagina
+  window.location.href = data.redirect; // Vai alla nuova pagina
 });
 
 socket.on("cardsLastRound", data => {
@@ -267,12 +267,18 @@ socket.on("cardsLastRound", data => {
   });
 
   // 3. LE MIE CARTE (Sempre fisse in basso)
-  const card = { carta: "last", valore: "last", idPlayer: playerData.idPlayer };
-  const img = document.createElement("img");
-  img.src = `/public/img/cards/Napoletane/bg.jpg`;
-  img.classList.add("card");
-  img.onclick = () => socket.emit("playCard", card, playerId);
-  myHand.appendChild(img);
+  //l'if è per togliere la carta coperta dalla mano dopo averla tirata
+  if ( playerData.cardsHands.length != 0 ) {
+    const card = { carta: "last", valore: "last" };
+    const img = document.createElement("img");
+    img.src = `/public/img/cards/Napoletane/bg.jpg`;
+    img.classList.add("card");
+    img.onclick = () => socket.emit("playCard", {
+          card: card, 
+          playerCode: playerData.idPlayer});
+    myHand.appendChild(img);
+  }
+  
 
   // 4. POSIZIONAMENTO AVVERSARI A CERCHIO
   // Supponiamo che gameState.allPlayers sia la lista di tutti gli ID al tavolo

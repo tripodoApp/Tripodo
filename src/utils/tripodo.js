@@ -30,6 +30,16 @@ function  initPlayer(idPlayer, numberPlayers, index, carte) {
 
 }
 
+function getValoreNegatoBanco(counter, currentRound) {
+    if (counter == currentRound) {
+      return 0;
+    } else if (counter > currentRound) {
+      return -1;
+    } else if (counter < currentRound) {
+      return currentRound - counter;
+    }
+  }
+
 function prossimoBanco(indice, sizePlayer) {
 
   return (indice + 1) % sizePlayer;
@@ -158,6 +168,7 @@ function fineRound(room) {
   if ( room.gameState.currentRound >= room.gameState.totalRound && currentRound == 1) {
 
     room.gameState.isLastRound = true;
+    room.gameState.isLastCard = true;
   } 
 
   const carte = dividiCarte(currentRound, room.players );
@@ -258,7 +269,8 @@ module.exports = {
   setTurnoPostPresa,
   fineRound,
   initPunteggi,
-  isPartitaFinita
+  isPartitaFinita, 
+  getValoreNegatoBanco
 };
 
 /*

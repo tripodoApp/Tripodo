@@ -318,12 +318,30 @@ tr:last-child {
         // });
 
         function updateScoreTable(players, punteggi) {
-      const header = document.getElementById('tableHeader');
-      const body = document.getElementById('tableBody');
+          const header = document.getElementById('tableHeader');
+          const body = document.getElementById('tableBody');
+
+          let max = 0;
+          let playerWin = null;
+          Object.entries(punteggi).forEach(([playerId, listaPunti]) => {
+            let counter = 0;
+            // Ora listaPunti è un array, quindi puoi usare di nuovo forEach!
+            listaPunti.forEach((punto, index) => {
+            counter += punto;
+          });
+          if ( counter >= max ) {
+            max = counter;
+            playerWin = playerId
+          }
+        });
+        const winPlayer = players.find(p => p.playerId === playerWin )
+        document.getElementById("winner-name").innerHTML =`${winPlayer.playerName}` ;
 
       // 1. Pulizia
       header.innerHTML = '<th>Round</th>'; 
       body.innerHTML = '';
+
+
 
       // 2. Intestazione: Nomi dei giocatori
       players.forEach(p => {
