@@ -1,7 +1,11 @@
 const tripodo = require("D:\\Desktop\\Tripodo\\src\\utils\\tripodo.js");
+let ioIstance;
+let roomsIstance;
+let turnTimer;
 module.exports = (io, socket, rooms) => {
 
-
+    ioIstance = io;
+    roomsIstance = rooms;
     const tableReady = (playerCode) => {
     const roomName = Object.keys(rooms).find((room) =>
       rooms[room].players.some((p) => p.playerId === playerCode),
@@ -70,7 +74,7 @@ module.exports = (io, socket, rooms) => {
         findCard = player.cardsHands[0];
       }
       
-      clearTimeout(rooms[roomName].gameState.turnTimer);
+      //clearTimeout(rooms[roomName].gameState.turnTimer);
       //Aggiungo la carta al tavolo
       rooms[roomName].gameState.cardsTable.push(findCard);
   
@@ -93,7 +97,7 @@ module.exports = (io, socket, rooms) => {
         //TIMEOUT
         setTimeout(() => {
           tripodo.setPresa(cartaMassima.idPlayer, rooms[roomName].playerState);
-          socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`, io);
+          socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
   
           // Svuto il tavolo
           rooms[roomName].gameState.cardsTable.length = 0;
@@ -115,7 +119,8 @@ module.exports = (io, socket, rooms) => {
               (player) =>
                 player.playerId === rooms[roomName].gameState.turnoAttualeId,
             );
-            socketMessaggio(roomName, `${playerRound.playerName} deve chiamare`, io);
+            socketMessaggio(roomName, `${playerRound.playerName} deve chiamare`);
+            startTurn(playerRound.playerId, rooms[roomName], roomName, playerRound.socketId, false, -1);
   
             //Aggiorno punteggio nella tabella
             const payloadUpdate = {
@@ -132,7 +137,8 @@ module.exports = (io, socket, rooms) => {
             const player = rooms[roomName].players.find(
               (p) => p.playerId === rooms[roomName].gameState.turnoAttualeId,
             );
-            socketMessaggio(roomName, `Tocca a ${player.playerName}`, io);
+            socketMessaggio(roomName, `Tocca a ${player.playerName}`);
+            startTurn(player.playerId, rooms[roomName], roomName, player.socketId, false, -1);
           }
   
           if (rooms[roomName].gameState.isLastRound) {
@@ -158,8 +164,10 @@ module.exports = (io, socket, rooms) => {
         const player = rooms[roomName].players.find(
           (p) => p.playerId === rooms[roomName].gameState.turnoAttualeId,
         );
-        socketMessaggio(roomName, `Tocca a ${player.playerName}`, io);
-        startTurn(player.playerId, rooms[roomName], roomName, io, player.socketId);
+        socketMessaggio(roomName, `Tocca a ${player.playerName}`);
+
+        //metto false perchè così dico che non è un giro di chiamata e -1 per far avviare il timeOut di una callNumber
+        startTurn(player.playerId, rooms[roomName], roomName, player.socketId, false);
         io.to(roomName).emit("finePlayCard");
       }
     };
@@ -265,10 +273,20 @@ module.exports = (io, socket, rooms) => {
   
       if (player.idPlayer === rooms[roomName].gameState.bancoId) {
         if (valueCall === rooms[roomName].gameState.valoreNegato) {
-          socketMessaggio(roomName, `Non puoi dire ${valueCall}`, io);
+          socketMessaggio(roomName, `Non puoi dire ${valueCall}`);
           return;
         }
       }
+
+      //CONTROLLO PER EVITARE CHE LA CHIAMATA SIA MAGGIORE AL NUMERO DELLE CARTE
+      let cr = rooms[roomName].gameState.currentRound;
+      if ( valueCall > cr ) {
+        socketMessaggio(roomName, `Non puoi dire ${valueCall}`);
+        return;
+      }
+
+
+      //clearTimeout(rooms[roomName].gameState.turnTimer);
   
       player.numeroChiamata = valueCall;
   
@@ -278,7 +296,7 @@ module.exports = (io, socket, rooms) => {
   
       socketMessaggio(
         roomName,
-        `${playerName.playerName} ha chiamato ${valueCall}`, io
+        `${playerName.playerName} ha chiamato ${valueCall}`
       );
   
       tripodo.prossimoTurno(rooms[roomName]);
@@ -287,17 +305,14 @@ module.exports = (io, socket, rooms) => {
         (player) => player.playerId === rooms[roomName].gameState.turnoAttualeId,
       );
   
-      socketMessaggio(roomName, `${playerName.playerName} e' il tuo turno`, io);
+      socketMessaggio(roomName, `${playerName.playerName} e' il tuo turno`);
   
       //rooms[roomName].gameState.turnoAttualeId = turnoSuccessivo.idPlayer
       const playerTimeout = rooms[roomName].players.find(
           (p) => p.playerId === rooms[roomName].gameState.turnoAttualeId,
         );
       //CASO BANCO
-      if (
-        rooms[roomName].gameState.turnoAttualeId ===
-        rooms[roomName].gameState.bancoId
-      ) {
+      if (rooms[roomName].gameState.turnoAttualeId === rooms[roomName].gameState.bancoId ) {
         let counter = 0;
   
         rooms[roomName].playerState.forEach((player) => {
@@ -317,17 +332,18 @@ module.exports = (io, socket, rooms) => {
         const socketBanco = Object.values(rooms[roomName].players).find(
           (p) => p.playerId === bancoId,
         );
-        startTurn(playerTimeout.playerId, rooms[roomName], roomName, io, playerTimeout.socketId, true)
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true, valueValoreNegato)
         io.to(socketBanco.socketId).emit("chiamataBanco", {valoreNegato: valueValoreNegato});
   
         //io.to(roomName).emit("chiamataFatta");
       } else if (player.idPlayer === rooms[roomName].gameState.bancoId) {
         rooms[roomName].gameState.giroChiamata = false;
-        startTurn(playerTimeout.playerId, rooms[roomName], roomName, io, playerTimeout.socketId, true)
+        //Questo turno dovrebbe far startare il timer per la prima carta della mano post chiamata
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true, -1)
         //io.to(roomName).emit("chiamataFatta");
       } else {
         //io.to(roomName).emit("chiamataFatta");
-        startTurn(playerTimeout.playerId, rooms[roomName], roomName, io, playerTimeout.socketId, true)
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true)
       }
   
       //Aggiorno ultima chiamata e turno
@@ -362,44 +378,91 @@ function getGameRoomByPlayerId(playerCode, rooms) {
     rooms[room].players.some((p) => p.playerId === playerCode),
   );
 }
-  function socketMessaggio(roomName, messaggio, io) {
-    io.to(roomName).emit("gameLog", {messaggio: messaggio});
+  function socketMessaggio(roomName, messaggio) {
+    ioIstance.to(roomName).emit("gameLog", {messaggio: messaggio});
   }
 
-  function startTurn(playerId, room, roomId, io, socketId, boolean) {
+  function startTurn(playerId, room, roomName, socketId, boolean, valoreNegato) {
     // 1. Avvisa tutti che è iniziato il turno e il tempo è 30s
     
-    socketMessaggio(roomId, "Il giocatore" + playerId + "ha 30 secondi", io )
+    const player = Object.values(room.players).find(
+        (p) => p.playerId === playerId,
+      );
+    socketMessaggio(roomName, "Il giocatore" + " " + player.playerName + " " + "ha 30 secondi")
 
     // 2. Cancella eventuali timer precedenti per sicurezza
-    clearTimeout(room.gameState.turnTimer);
+    clearTimeout(turnTimer);
 
     if ( boolean ) {
       // 3. Fissa la "scadenza" a 30 secondi
       turnTimer = setTimeout(() => {
-        handleTimeoutCall(playerId, room, io,socketId);
+        handleTimeoutCall(playerId, socketId, valoreNegato);
       }, 5000); 
     } else {
       // 3. Fissa la "scadenza" a 30 secondi
       turnTimer = setTimeout(() => {
-        handleTimeout(playerId, room, io,socketId);
+        handleTimeout(playerId,socketId, valoreNegato);
       }, 5000); 
     }
     
 }
 
-function handleTimeoutCall(playerId, room, io, socketId) {
-    
-  const player = room.playerState.find(p => p.idPlayer === playerId);
-  const carta = player.cardsHands[0];
-  io.to(socketId).emit("playCardHandShake", {card: carta, playerCode : playerId});
+function handleTimeoutCall(playerId, socketId, valoreNegato) {
+  
+  let roomName = getGameRoomByPlayerId(playerId, roomsIstance);
+  let room = roomsIstance[roomName];
+
+  let currentRoundHand = room.gameState.currentRoundHand;
+
+  if ( valoreNegato && valoreNegato != -1 ) {
+
+
+    ioIstance.to(socketId).emit("playCallNumberHandshake", {valueCall: generaRandomEscludendo(currentRoundHand, valoreNegato),
+                                                    playerCode:playerId
+    });
+  } else if ( valoreNegato === -1 ) {
+
+    const player = room.playerState.find(p => p.idPlayer === playerId);
+    const carta = player.cardsHands[0];
+    ioIstance.to(socketId).emit("playCardHandShake", {card: carta, playerCode : playerId});
+
+  } else {
+
+     ioIstance.to(socketId).emit("playCallNumberHandshake", {valueCall: generaRandomEscludendo(currentRoundHand),
+                                                    playerCode:playerId
+    });
+  }
 }
 
-function handleTimeout(playerId, room, io, socketId) {
+function generaRandomEscludendo(max, daEscludere) {
+    let numeroRandom;
     
-  const player = room.playerState.find(p => p.idPlayer === playerId);
-  const carta = player.cardsHands[0];
-  io.to(socketId).emit("playCardHandShake", {card: carta, playerCode : playerId});
+    do {
+        // Genera un intero tra 0 e max (incluso)
+        numeroRandom = Math.floor(Math.random() * (max + 1));
+    } while (numeroRandom === daEscludere);
+    
+    return numeroRandom;
+}
+
+
+function handleTimeout(playerId, socketId, valoreNegato) {
+  
+  let roomName = getGameRoomByPlayerId(playerId, roomsIstance);
+  let room = roomsIstance[roomName];
+
+  if (valoreNegato === -1 ) {
+    let currentRoundHand = room.gameState.currentRoundHand;
+    ioIstance.to(socketId).emit("playCallNumberHandshake", {valueCall: generaRandomEscludendo(currentRoundHand),
+                                                    playerCode:playerId
+    });
+    
+  } else {
+
+    const player = room.playerState.find(p => p.idPlayer === playerId);
+    const carta = player.cardsHands[0];
+    ioIstance.to(socketId).emit("playCardHandShake", {card: carta, playerCode : playerId});
+  }
 }
 
 // function playCardLogic(room, roomName, card, playerId) {

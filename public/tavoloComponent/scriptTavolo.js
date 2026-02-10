@@ -180,6 +180,14 @@ socket.on("chiamataBanco", data => {
   }
 });
 
+socket.on("playCallNumberHandshake", data => {
+
+  socket.emit("callNumber", {
+    valueCall: data.valueCall, 
+    playerCode: data.playerCode
+  });
+});
+
 socket.on("playCardHandShake", data => {
 
   socket.emit("playCard", {card: data.card, playerCode : data.playerCode})

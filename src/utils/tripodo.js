@@ -124,7 +124,8 @@ function initGameState(bancoId, numberPlayers, indiceTurno) {
         indiceTurno: indiceTurno,
         punteggi: {},
         isLastRound: false,
-        turnTimer: 0
+        turnTimerCall: 0,
+        turnTimerCard: 0
     }
 
     return gameState;
