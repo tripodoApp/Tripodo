@@ -26,11 +26,22 @@ module.exports = (io, socket, rooms) => {
 
     socket.userId = playerCode;
 
+    //Questo serve per bypassare il problema del primo messaggio
+    const playerTurnoAttuale = rooms[roomName].players.find(
+      p => p.playerId === gameState.turnoAttualeId
+    );
+
     const payload = {
       playerData : playerData, 
       gameState: gameState, 
       players: rooms[roomName].players
     }
+    if ( playerTurnoAttuale.playerId === playerCode ) {
+
+      socketMessaggio(roomName, "Tocca a" + " " + playerTurnoAttuale.playerName)
+      startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true)
+    }
+    
     socket.emit("initData", payload);
   };
 
@@ -339,11 +350,11 @@ module.exports = (io, socket, rooms) => {
       } else if (player.idPlayer === rooms[roomName].gameState.bancoId) {
         rooms[roomName].gameState.giroChiamata = false;
         //Questo turno dovrebbe far startare il timer per la prima carta della mano post chiamata
-        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true, -1)
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true, -1);
         //io.to(roomName).emit("chiamataFatta");
       } else {
         //io.to(roomName).emit("chiamataFatta");
-        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true)
+        startTurn(playerTimeout.playerId, rooms[roomName], roomName, playerTimeout.socketId, true);
       }
   
       //Aggiorno ultima chiamata e turno
