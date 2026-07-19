@@ -1,4 +1,4 @@
-const tripodo = require("D:\\Desktop\\Tripodo\\src\\utils\\tripodo.js");
+const tripodo = require("/mnt/DiscoD/Tripodo/src/utils/tripodo.js");
 let ioIstance;
 let roomsIstance;
 let turnTimer;

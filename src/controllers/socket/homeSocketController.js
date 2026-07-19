@@ -1,4 +1,5 @@
-const tripodo = require("D:\\Desktop\\Tripodo\\src\\utils\\tripodo.js");
+const tripodo = require("/mnt/DiscoD/Tripodo/src/utils/tripodo.js");
+const md5 = require('md5');
 module.exports = (io, socket, rooms) => {
 
 ////////////////////////////// CREA ROOM
@@ -140,7 +141,7 @@ module.exports = (io, socket, rooms) => {
         rooms[roomId].gameState.turnoAttualeId;
   
       io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
-      socketMessaggio(roomId, "E' il turno di x");
+      //socketMessaggio(roomId, "E' il turno di x");
     };
 
   //////////////////////////////////////////////////////// START GAME PER TEST

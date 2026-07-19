@@ -13,6 +13,7 @@
   "dependencies": {
     "crypto-md5": "^1.0.0",
     "express": "^5.2.1",
+    "md5": "^2.3.0",
     "nodemon": "^3.1.11",
     "socket.io": "^4.8.1"
   }
