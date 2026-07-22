@@ -1,5 +1,4 @@
-const { Socket } = require('socket.io');
-const enumCarte = require('./EnumCarte')
+const enumCarte = require('./EnumCarte');
 
 const numberCard = 40;
 
@@ -123,9 +122,7 @@ function initGameState(bancoId, numberPlayers, indiceTurno) {
         valoreNegato: undefined,
         indiceTurno: indiceTurno,
         punteggi: {},
-        isLastRound: false,
-        turnTimerCall: 0,
-        turnTimerCard: 0
+        isLastRound: false
     }
 
     return gameState;
@@ -167,10 +164,7 @@ function fineRound(room) {
       });
   
   aggiungiIdCarte(room.playerState);
-  room.players.forEach((playerId, index) => {
-        room.playerState[index].cardsHands = carte[`${playerId.playerId}`]
-        
-      });
+
   setBancoSuccessivo(room);
   prossimoTurno(room);
 

@@ -31,16 +31,16 @@ io.on("connection", (socket) => {
   homeSocketController(io, socket, rooms);
   tableSocketController(io, socket, rooms);
 
-  
+
 
   socket.on("handshakeChiamata", data => {
 
     const playerCode = data.playerCode;
-    if (!playerCode ) {
-        return socket.emit("error", { 
-            code: 500, 
-            message: "playerCode non esistente" 
-        });
+    if (!playerCode) {
+      return socket.emit("error", {
+        code: 500,
+        message: "playerCode non esistente"
+      });
     }
 
     const roomName = Object.keys(rooms).find((room) =>
@@ -53,43 +53,10 @@ io.on("connection", (socket) => {
       (p) => p.idPlayer === playerCode,
     );
 
-    // const payload = {
-    //   player: player, 
-    //   gameState: rooms[roomName].gameState
-    // }
     socket.emit("fineHandshakeChiamata", player, rooms[roomName].gameState);
   });
 
-
-  function setGiocatoreSuccessivo(roomName, playerId) {
-    let indiceGiocatoreSuccessivo = getGiocatoreSuccessivo(
-      player,
-      playersCount,
-    );
-    const turnoSuccessivo = Object.values(rooms[roomName].playerState).find(
-      (elemento) => elemento.index === indiceGiocatoreSuccessivo,
-    );
-
-    turnoSuccessivo.myTurn = true;
-
-    rooms[roomName].gameState.turnoAttualeId = turnoSuccessivo.idPlayer;
-  }
-
-
 });
-
-function getGiocatoreSuccessivo(playerAttuale, numberOfPlayer) {
-  let indicePlayerAttuale = playerAttuale.index;
-  let indicePlayerSuccessivo;
-
-  if (indicePlayerAttuale + 1 == numberOfPlayer) {
-    indicePlayerSuccessivo = 0;
-  } else {
-    indicePlayerSuccessivo = indicePlayerAttuale + 1;
-  }
-
-  return indicePlayerSuccessivo;
-}
 
 // Cerca la porta che ti assegna Render, se non la trova usa la 3000
 const PORT = process.env.PORT || 3000;

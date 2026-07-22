@@ -1,7 +1,6 @@
-const tripodo = require("/mnt/DiscoD/Tripodo/src/utils/tripodo.js");
+const tripodo = require("../../utils/tripodo.js");
 let ioIstance;
 let roomsIstance;
-let turnTimer;
 module.exports = (io, socket, rooms) => {
 
     ioIstance = io;
@@ -26,23 +25,31 @@ module.exports = (io, socket, rooms) => {
 
     socket.userId = playerCode;
 
-    //Questo serve per bypassare il problema del primo messaggio
+    const payload = {
+      playerData : playerData,
+      gameState: gameState,
+      players: rooms[roomName].players
+    };
+
+    // Invia i dati di inizializzazione al client
+    socket.emit("initData", payload);
+
+    // Avvia il turno solo se è il turno di questo giocatore
+    // Guard: turnoAttualeId potrebbe essere undefined se tableReady arriva
+    // prima che il setup sia completato
     const playerTurnoAttuale = rooms[roomName].players.find(
       p => p.playerId === gameState.turnoAttualeId
     );
 
-    const payload = {
-      playerData : playerData, 
-      gameState: gameState, 
-      players: rooms[roomName].players
+    if (!playerTurnoAttuale) {
+      console.warn(`[tableReady] playerTurnoAttuale non trovato per turnoAttualeId=${gameState.turnoAttualeId}`);
+      return;
     }
-    if ( playerTurnoAttuale.playerId === playerCode ) {
 
-      socketMessaggio(roomName, "Tocca a" + " " + playerTurnoAttuale.playerName)
-      startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true)
+    if (playerTurnoAttuale.playerId === playerCode) {
+      socketMessaggio(roomName, "Tocca a" + " " + playerTurnoAttuale.playerName);
+      startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true);
     }
-    
-    socket.emit("initData", payload);
   };
 
   const playCard = data => {
@@ -111,7 +118,7 @@ module.exports = (io, socket, rooms) => {
           socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
   
           // Svuto il tavolo
-          rooms[roomName].gameState.cardsTable.length = 0;
+          rooms[roomName].gameState.cardsTable = [];
           // Mando al client il tavolo
           //io.to(roomName).emit("aggiornaTavolo", {carte: []});
   
@@ -360,25 +367,12 @@ module.exports = (io, socket, rooms) => {
       //Aggiorno ultima chiamata e turno
     };
 
-    const initGame = () => {
-        const roomId = getGameRoom(socket);
-        const playersCount = rooms[roomId].players.length;
-    
-        rooms[roomName].players.forEach((playerSocketId, index) => {
-          rooms[roomName].gameState[playerSocketId] = tripodo.initPlayer(
-            playerSocketId,
-            playersCount,
-          );
-        });
-    };
-
   socket.on("tableReady", tableReady);
   socket.on("playCard", playCard);
   socket.on("callNumber", callNumber);
-  socket.on("initGame", initGame);
   socket.on("prepareLastRound", prepareLastRound);
   socket.on("aggiornaDati", aggiornaDati);
-  }
+}
 
 function getGameRoom(socket) {
   return [...socket.rooms].find((room) => room !== socket.id);
@@ -394,28 +388,25 @@ function getGameRoomByPlayerId(playerCode, rooms) {
   }
 
   function startTurn(playerId, room, roomName, socketId, boolean, valoreNegato) {
-    // 1. Avvisa tutti che è iniziato il turno e il tempo è 30s
-    
     const player = Object.values(room.players).find(
-        (p) => p.playerId === playerId,
-      );
-    socketMessaggio(roomName, "Il giocatore" + " " + player.playerName + " " + "ha 30 secondi")
+      (p) => p.playerId === playerId,
+    );
+    socketMessaggio(roomName, "Il giocatore" + " " + player.playerName + " " + "ha 30 secondi");
 
-    // 2. Cancella eventuali timer precedenti per sicurezza
-    clearTimeout(turnTimer);
+    // Cancella il timer precedente della stessa partita (per-room, non in gameState)
+    // IMPORTANTE: il Timeout non va in gameState perché gameState viene serializzato
+    // da Socket.IO nei payload — un oggetto Timeout causa stack overflow in hasBinary
+    clearTimeout(roomsIstance[roomName].turnTimer);
 
-    if ( boolean ) {
-      // 3. Fissa la "scadenza" a 30 secondi
-      turnTimer = setTimeout(() => {
+    if (boolean) {
+      roomsIstance[roomName].turnTimer = setTimeout(() => {
         handleTimeoutCall(playerId, socketId, valoreNegato);
-      }, 5000); 
+      }, 30000);
     } else {
-      // 3. Fissa la "scadenza" a 30 secondi
-      turnTimer = setTimeout(() => {
-        handleTimeout(playerId,socketId, valoreNegato);
-      }, 5000); 
+      roomsIstance[roomName].turnTimer = setTimeout(() => {
+        handleTimeout(playerId, socketId, valoreNegato);
+      }, 30000);
     }
-    
 }
 
 function handleTimeoutCall(playerId, socketId, valoreNegato) {

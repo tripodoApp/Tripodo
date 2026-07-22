@@ -1,4 +1,4 @@
-const tripodo = require("/mnt/DiscoD/Tripodo/src/utils/tripodo.js");
+const tripodo = require("../../utils/tripodo.js");
 const md5 = require('md5');
 module.exports = (io, socket, rooms) => {
 
@@ -241,9 +241,10 @@ module.exports = (io, socket, rooms) => {
           return;
         }
 
-        // Cambio host stanza se il giocatore che è uscito è l'host
-        if (room.host === userId) {
-          room.host = room.players[0].playerId;
+        // Cambio host stanza se il socket che è uscito era l'host
+        // Confronto sul socketId (non playerId) perché room.host è sempre uno socketId
+        if (room.host === socket.id) {
+          room.host = room.players[0].socketId;
         }
 
         // Notifica gli altri ( questo me lo ha detto Gemini, devo capire un attimo meglio)
