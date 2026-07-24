@@ -2,9 +2,9 @@ const tripodo = require("../../utils/tripodo.js");
 const md5 = require('md5');
 module.exports = (io, socket, rooms) => {
 
-////////////////////////////// CREA ROOM
+  ////////////////////////////// CREA ROOM
   const createRoom = (data) => {
-    const {roomName, player: { playerId, playerName } } = data;
+    const { roomName, player: { playerId, playerName } } = data;
 
     //VALIDO I DATI DEL FRONT-END
     if (!roomName || !playerId || !playerName) {
@@ -46,7 +46,7 @@ module.exports = (io, socket, rooms) => {
 
   ////////////////////////////////////////////////// JOIN ROOM
   const joinRoom = (data) => {
-    const { roomName, player: { idPlayer, playerName }} = data;
+    const { roomName, player: { idPlayer, playerName } } = data;
 
     //VALIDO I DATI DEL FRONT-END
     if (!roomName || !idPlayer || !playerName) {
@@ -93,7 +93,7 @@ module.exports = (io, socket, rooms) => {
   };
 
   //////////////////////////////////////////// START GAME (solo host)
-  const startGame =  () => {
+  const startGame = () => {
     // trova la room in cui è host
     const roomName = Object.keys(rooms).find(
       (r) => rooms[r].host === socket.id,
@@ -105,47 +105,47 @@ module.exports = (io, socket, rooms) => {
   };
 
   ////////////////////////////////////REDIRECT TABLE
-  const redirectTable =  () => {
-      const roomId = getGameRoom(socket);
-      const playersCount = rooms[roomId].players.length;
-  
-      const carte = tripodo.dividiCarte(1, rooms[roomId].players);
-  
-      rooms[roomId].players.forEach((playerId, index) => {
-        rooms[roomId].playerState[index] = tripodo.initPlayer(
-          playerId.playerId,
-          playersCount,
-          index,
-          carte[`${playerId.playerId}`],
-        );
-      });
-  
-      tripodo.aggiungiIdCarte(rooms[roomId].playerState);
-  
-      //CON QUESTO SETTO IL TURNO DE GIOCATORE PLAYER STATE
-      let inizioTurno = tripodo.bancoInitGames(playersCount);
-  
-      const banco = rooms[roomId].playerState[inizioTurno - 1];
-  
-      rooms[roomId].gameState = tripodo.initGameState(
-        banco.idPlayer,
+  const redirectTable = () => {
+    const roomId = getGameRoom(socket);
+    const playersCount = rooms[roomId].players.length;
+
+    const carte = tripodo.dividiCarte(1, rooms[roomId].players);
+
+    rooms[roomId].players.forEach((playerId, index) => {
+      rooms[roomId].playerState[index] = tripodo.initPlayer(
+        playerId.playerId,
         playersCount,
-        inizioTurno - 1,
+        index,
+        carte[`${playerId.playerId}`],
       );
-  
-      tripodo.initPunteggi(rooms[roomId].gameState, rooms[roomId].playerState);
-  
-      tripodo.prossimoTurno(rooms[roomId]);
-  
-      rooms[roomId].gameState.ultimaPresa =
-        rooms[roomId].gameState.turnoAttualeId;
-  
-      io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
-      //socketMessaggio(roomId, "E' il turno di x");
-    };
+    });
+
+    tripodo.aggiungiIdCarte(rooms[roomId].playerState);
+
+    //CON QUESTO SETTO IL TURNO DE GIOCATORE PLAYER STATE
+    let inizioTurno = tripodo.bancoInitGames(playersCount);
+
+    const banco = rooms[roomId].playerState[inizioTurno - 1];
+
+    rooms[roomId].gameState = tripodo.initGameState(
+      banco.idPlayer,
+      playersCount,
+      inizioTurno - 1,
+    );
+
+    tripodo.initPunteggi(rooms[roomId].gameState, rooms[roomId].playerState);
+
+    tripodo.prossimoTurno(rooms[roomId]);
+
+    rooms[roomId].gameState.ultimaPresa =
+      rooms[roomId].gameState.turnoAttualeId;
+
+    io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
+    //socketMessaggio(roomId, "E' il turno di x");
+  };
 
   //////////////////////////////////////////////////////// START GAME PER TEST
-  const startGameTest =  () => {
+  const startGameTest = () => {
     // trova la room in cui è host
     const roomName = Object.keys(rooms).find(
       (r) => rooms[r].host === socket.id,
@@ -157,55 +157,55 @@ module.exports = (io, socket, rooms) => {
   };
 
   //////////////////////////////////////////////////////REDIRECT TABLE PER TEST
-    const redirectTableTest =  (numeroGiocatoriTest) => {
-      const roomId = getGameRoom(socket);
-      let playersCount = rooms[roomId].players.length;
-  
-      const carte = tripodo.dividiCarte(1, rooms[roomId].players);
-  
-      rooms[roomId].players.forEach((playerId, index) => {
-        rooms[roomId].playerState[index] = tripodo.initPlayer(
-          playerId.playerId,
-          playersCount,
-          index,
-          carte[`${playerId.playerId}`],
-        );
-      });
-  
-      tripodo.aggiungiIdCarte(rooms[roomId].playerState);
-  
-      //CON QUESTO SETTO IL TURNO DE GIOCATORE PLAYER STATE
-      let inizioTurno = tripodo.bancoInitGames(playersCount);
-  
-      const banco = rooms[roomId].playerState[inizioTurno - 1];
-  
-      playersCount = numeroGiocatoriTest;
-      rooms[roomId].gameState = tripodo.initGameState(
-        banco.idPlayer,
+  const redirectTableTest = (numeroGiocatoriTest) => {
+    const roomId = getGameRoom(socket);
+    let playersCount = rooms[roomId].players.length;
+
+    const carte = tripodo.dividiCarte(1, rooms[roomId].players);
+
+    rooms[roomId].players.forEach((playerId, index) => {
+      rooms[roomId].playerState[index] = tripodo.initPlayer(
+        playerId.playerId,
         playersCount,
-        inizioTurno - 1,
+        index,
+        carte[`${playerId.playerId}`],
       );
-      playersCount = rooms[roomId].players.length;
-      tripodo.initPunteggi(rooms[roomId].gameState, rooms[roomId].playerState);
-  
-      tripodo.prossimoTurno(rooms[roomId]);
-  
-      rooms[roomId].gameState.ultimaPresa =
-        rooms[roomId].gameState.turnoAttualeId;
-  
-      io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
-    };
+    });
+
+    tripodo.aggiungiIdCarte(rooms[roomId].playerState);
+
+    //CON QUESTO SETTO IL TURNO DE GIOCATORE PLAYER STATE
+    let inizioTurno = tripodo.bancoInitGames(playersCount);
+
+    const banco = rooms[roomId].playerState[inizioTurno - 1];
+
+    playersCount = numeroGiocatoriTest;
+    rooms[roomId].gameState = tripodo.initGameState(
+      banco.idPlayer,
+      playersCount,
+      inizioTurno - 1,
+    );
+    playersCount = rooms[roomId].players.length;
+    tripodo.initPunteggi(rooms[roomId].gameState, rooms[roomId].playerState);
+
+    tripodo.prossimoTurno(rooms[roomId]);
+
+    rooms[roomId].gameState.ultimaPresa =
+      rooms[roomId].gameState.turnoAttualeId;
+
+    io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
+  };
 
   ///////////////////////////////////////////////////////GENERATE ID PLAYER
-    const generatePlayerID =  () => {
-      let playerId = md5(socket.id);
-  
-      socket.emit("returnIdPlayer", playerId);
-    };
+  const generatePlayerID = () => {
+    let playerId = md5(socket.id);
+
+    socket.emit("returnIdPlayer", playerId);
+  };
 
 
   //////////////////////////////////////////////////////////DISCONNESIONE
-  const disconnect =  () => {
+  const disconnect = () => {
     const userId = socket.userId; // Il tuo playerId
     if (!userId) return;
 
@@ -242,9 +242,9 @@ module.exports = (io, socket, rooms) => {
         }
 
         // Cambio host stanza se il socket che è uscito era l'host
-        // Confronto sul socketId (non playerId) perché room.host è sempre uno socketId
-        if (room.host === socket.id) {
-          room.host = room.players[0].socketId;
+        //(DA CLAUDE CAPIRE) Confronto sul socketId (non playerId) perché room.host è sempre uno socketId
+        if (room.host === userId) {
+          room.host = room.players[0].playerId;
         }
 
         // Notifica gli altri ( questo me lo ha detto Gemini, devo capire un attimo meglio)
@@ -258,11 +258,11 @@ module.exports = (io, socket, rooms) => {
 
   //DICHIARAZIONE SOCKET
   socket.on("createRoom", createRoom);
-  socket.on("joinRoom", joinRoom );
-  socket.on("disconnect", disconnect );
-  socket.on("startGame", startGame );
-  socket.on("startGameTest", startGameTest );
-  socket.on("generatePlayerID", generatePlayerID );
+  socket.on("joinRoom", joinRoom);
+  socket.on("disconnect", disconnect);
+  socket.on("startGame", startGame);
+  socket.on("startGameTest", startGameTest);
+  socket.on("generatePlayerID", generatePlayerID);
   socket.on("redirectTable", redirectTable);
   socket.on("redirectTableTest", redirectTableTest)
 }
