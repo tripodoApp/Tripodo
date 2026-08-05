@@ -26,25 +26,28 @@ module.exports = (io, socket, rooms) => {
 
     socket.userId = playerCode;
 
-    const payload = {
-      playerData: playerData,
-      gameState: gameState,
-      players: rooms[roomName].players
-    };
-
-    // Invia subito i dati a questo giocatore
-    socket.emit("initData", payload);
-
-    // Avvia il timer del turno solo quando TUTTI i giocatori sono pronti.
-    // Il flag gameStarted impedisce che allReady si ri-triggheri se un giocatore
-    // refresha la pagina dopo che tutti erano già connessi.
+    // Avvia il timer e manda i dati solo quando TUTTI i giocatori sono pronti,
+    // così ogni client riceve la lista completa dei giocatori (es. 5 su 5).
+    // Il flag gameStarted impedisce ri-trigger se un giocatore refresha dopo l'inizio.
     const allReady = rooms[roomName].players.every(p => p.ready);
     if (allReady && !rooms[roomName].gameStarted) {
       rooms[roomName].gameStarted = true;
+
+      // Manda initData personalizzato a ciascun giocatore (ognuno riceve i propri dati)
+      // ma solo adesso che tutti sono connessi e la players list è completa
+      rooms[roomName].players.forEach(p => {
+        const pData = rooms[roomName].playerState.find(ps => ps.idPlayer === p.playerId);
+        const individualPayload = {
+          playerData: pData,
+          gameState: rooms[roomName].gameState,
+          players: rooms[roomName].players
+        };
+        io.to(p.socketId).emit("initData", individualPayload);
+      });
+
       const playerTurnoAttuale = rooms[roomName].players.find(
         p => p.playerId === gameState.turnoAttualeId
       );
-      // startTurn invia già il suo messaggio nel game log — non ne serve un secondo
       startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true);
     }
   };
