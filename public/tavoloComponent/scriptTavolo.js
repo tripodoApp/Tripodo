@@ -42,7 +42,7 @@ function adjustLayout() {
 
 socket.on("initData", data => {
 
-  const {playerData, gameState, players} = data;
+  const { playerData, gameState, players } = data;
   // 1. Pulizia totale
   const container = document.querySelector(".game-container");
   // Rimuovi tutti i vecchi player tranne quello locale se preferisci,
@@ -67,8 +67,9 @@ socket.on("initData", data => {
     img.onclick = () => {
       if (canPlay) {
         socket.emit("playCard", {
-          card: card, 
-          playerCode: playerId});
+          card: card,
+          playerCode: playerId
+        });
       } else {
         console.log("Azione bloccata: il tavolo si sta aggiornando");
       }
@@ -77,56 +78,55 @@ socket.on("initData", data => {
   });
 
   // 4. POSIZIONAMENTO AVVERSARI A CERCHIO
-  // Supponiamo che gameState.allPlayers sia la lista di tutti gli ID al tavolo
+  // Usiamo requestAnimationFrame per leggere offsetWidth/Height solo dopo
+  // che il browser ha effettivamente renderizzato il layout (critico su mobile).
   const avversari = players.filter((player) => player.playerId !== playerId);
   const numAvversari = avversari.length;
+  const raggio = 280;
 
-  const raggio = 280; // Distanza dal centro tavolo
-  const centerX = container.offsetWidth / 2;
-  const centerY = container.offsetHeight / 2;
+  requestAnimationFrame(() => {
+    const centerX = container.offsetWidth / 2;
+    const centerY = container.offsetHeight / 2;
 
-  avversari.forEach((advId, index) => {
-    // Calcoliamo l'angolo: distribuiamo gli avversari nell'arco superiore (da 180° a 360°)
-    // In questo modo nessuno si sovrappone a TE che sei a 90° (in basso)
-    const startAngle = Math.PI; // Inizia da sinistra
-    const endAngle = 2 * Math.PI; // Finisce a destra
-    const angle =
-      startAngle + (index * (endAngle - startAngle)) / (numAvversari - 1 || 1);
+    avversari.forEach((advId, index) => {
+      // Distribuiamo gli avversari nell'arco superiore (da 180° a 360°)
+      const startAngle = Math.PI;
+      const endAngle = 2 * Math.PI;
+      const angle =
+        startAngle + (index * (endAngle - startAngle)) / (numAvversari - 1 || 1);
 
-    const x = centerX + raggio * Math.cos(angle) - 50;
-    const y = centerY + raggio * Math.sin(angle) - 50;
+      const x = centerX + raggio * Math.cos(angle) - 50;
+      const y = centerY + raggio * Math.sin(angle) - 50;
 
-    // Crea il div dell'avversario
-    const divOpp = document.createElement("div");
-    divOpp.className = "player opponent";
-    divOpp.style.left = `${x}px`;
-    divOpp.style.top = `${y}px`;
+      const divOpp = document.createElement("div");
+      divOpp.className = "player opponent";
+      divOpp.style.left = `${x}px`;
+      divOpp.style.top = `${y}px`;
 
-    // Ruota il contenitore verso il centro
-    const rotation = (angle * 180) / Math.PI - 270;
-    divOpp.style.transform = `rotate(${rotation}deg)`;
+      const rotation = (angle * 180) / Math.PI - 270;
+      divOpp.style.transform = `rotate(${rotation}deg)`;
 
-    // Aggiungi le carte coperte (es. 3 carte)
-    const handDiv = document.createElement("div");
-    handDiv.className = "hand";
-    playerData.cardsHands.forEach(() => {
-      const cardBack = document.createElement("img");
-      cardBack.src = `/public/img/cards/Napoletane/bg.jpg`;
-      cardBack.classList.add("card");
-      handDiv.appendChild(cardBack);
+      // Carte coperte dell'avversario
+      const handDiv = document.createElement("div");
+      handDiv.className = "hand";
+      playerData.cardsHands.forEach(() => {
+        const cardBack = document.createElement("img");
+        cardBack.src = `/public/img/cards/Napoletane/bg.jpg`;
+        cardBack.classList.add("card");
+        handDiv.appendChild(cardBack);
+      });
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.innerText = `${advId.playerName}`;
+      label.style.transform = `rotate(${-rotation}deg)`;
+      label.style.color = "white";
+
+      divOpp.appendChild(handDiv);
+      divOpp.appendChild(label);
+      container.appendChild(divOpp);
     });
-
-    // Etichetta col nome/ID
-    const label = document.createElement("div");
-    label.className = "label";
-    label.innerText = `${advId.playerName}`;
-    label.style.transform = `rotate(${-rotation}deg)`;
-    label.style.color = "white"; // Raddrizza il testo
-
-    divOpp.appendChild(handDiv);
-    divOpp.appendChild(label);
-    container.appendChild(divOpp);
-  });
+  }); // fine requestAnimationFrame
 });
 
 socket.on("aggiornaTavolo", data => {
@@ -156,24 +156,24 @@ socket.on("cardOnTable", ({ card }) => {
 
 socket.on("finePlayCard", () => {
   canPlay = true;
-  socket.emit("aggiornaDati", {playerCode: playerId});
+  socket.emit("aggiornaDati", { playerCode: playerId });
 });
 
 socket.on("updateTable", () => {
   canPlay = false;
-  socket.emit("aggiornaDati", {playerCode: playerId});
+  socket.emit("aggiornaDati", { playerCode: playerId });
 });
 
 socket.on("chiamataFatta", () => {
-  socket.emit("handshakeChiamata", {playerCode: playerId});
+  socket.emit("handshakeChiamata", { playerCode: playerId });
 });
 
 socket.on("lastRound", () => {
-  socket.emit("prepareLastRound", {playerCode: playerId});
+  socket.emit("prepareLastRound", { playerCode: playerId });
 });
 
 socket.on("chiamataBanco", data => {
-  
+
   const valoreNegato = data.valoreNegato;
   if (valoreNegato != -1) {
     callInput.pattern = `[1-${valoreNegato - 1}${valoreNegato + 1}-9]`;
@@ -183,14 +183,14 @@ socket.on("chiamataBanco", data => {
 socket.on("playCallNumberHandshake", data => {
 
   socket.emit("callNumber", {
-    valueCall: data.valueCall, 
+    valueCall: data.valueCall,
     playerCode: data.playerCode
   });
 });
 
 socket.on("playCardHandShake", data => {
 
-  socket.emit("playCard", {card: data.card, playerCode : data.playerCode})
+  socket.emit("playCard", { card: data.card, playerCode: data.playerCode })
 });
 
 socket.on("updateScores", (data) => {
@@ -281,79 +281,75 @@ socket.on("cardsLastRound", data => {
 
   // 3. LE MIE CARTE (Sempre fisse in basso)
   //l'if è per togliere la carta coperta dalla mano dopo averla tirata
-  if ( playerData.cardsHands.length != 0 ) {
+  if (playerData.cardsHands.length != 0) {
     const card = { carta: "last", valore: "last" };
     const img = document.createElement("img");
     img.src = `/public/img/cards/Napoletane/bg.jpg`;
     img.classList.add("card");
     img.onclick = () => socket.emit("playCard", {
-          card: card, 
-          playerCode: playerData.idPlayer});
+      card: card,
+      playerCode: playerData.idPlayer
+    });
     myHand.appendChild(img);
   }
-  
 
-  // 4. POSIZIONAMENTO AVVERSARI A CERCHIO
-  // Supponiamo che gameState.allPlayers sia la lista di tutti gli ID al tavolo
+
+  // 4. POSIZIONAMENTO AVVERSARI A CERCHIO (ultimo round - carte scoperte)
+  // requestAnimationFrame per garantire dimensioni corrette su mobile
   const avversari = players.filter((player) => player.playerId !== playerId);
   const numAvversari = avversari.length;
+  const raggio = 280;
 
-  const raggio = 280; // Distanza dal centro tavolo
-  const centerX = container.offsetWidth / 2;
-  const centerY = container.offsetHeight / 2;
+  requestAnimationFrame(() => {
+    const centerX = container.offsetWidth / 2;
+    const centerY = container.offsetHeight / 2;
 
-  avversari.forEach((advId, index) => {
-    // Calcoliamo l'angolo: distribuiamo gli avversari nell'arco superiore (da 180° a 360°)
-    // In questo modo nessuno si sovrappone a TE che sei a 90° (in basso)
-    const startAngle = Math.PI; // Inizia da sinistra
-    const endAngle = 2 * Math.PI; // Finisce a destra
-    const angle =
-      startAngle + (index * (endAngle - startAngle)) / (numAvversari - 1 || 1);
+    avversari.forEach((advId, index) => {
+      const startAngle = Math.PI;
+      const endAngle = 2 * Math.PI;
+      const angle =
+        startAngle + (index * (endAngle - startAngle)) / (numAvversari - 1 || 1);
 
-    const x = centerX + raggio * Math.cos(angle) - 50;
-    const y = centerY + raggio * Math.sin(angle) - 50;
+      const x = centerX + raggio * Math.cos(angle) - 50;
+      const y = centerY + raggio * Math.sin(angle) - 50;
 
-    // Crea il div dell'avversario
-    const divOpp = document.createElement("div");
-    divOpp.className = "player opponent";
-    divOpp.style.left = `${x}px`;
-    divOpp.style.top = `${y}px`;
+      const divOpp = document.createElement("div");
+      divOpp.className = "player opponent";
+      divOpp.style.left = `${x}px`;
+      divOpp.style.top = `${y}px`;
 
-    // Ruota il contenitore verso il centro
-    const rotation = (angle * 180) / Math.PI - 270;
-    divOpp.style.transform = `rotate(${rotation}deg)`;
+      const rotation = (angle * 180) / Math.PI - 270;
+      divOpp.style.transform = `rotate(${rotation}deg)`;
 
-    // Aggiungi le carte coperte dell'avversario oppure IN QUESTO CASO
-    //ultimo giro scoperto
-    const handDiv = document.createElement("div");
-    carte.forEach((carta) => {
-      if (carta.idPlayer === advId.playerId) {
-        handDiv.className = "hand";
+      // Carte scoperte dell'avversario (ultimo giro)
+      const handDiv = document.createElement("div");
+      carte.forEach((carta) => {
+        if (carta.idPlayer === advId.playerId) {
+          handDiv.className = "hand";
+          const card = document.createElement("img");
+          card.src = `/public/img/cards/Napoletane/${carta.carta}.jpg`;
+          card.classList.add("card");
+          handDiv.appendChild(card);
+        }
+      });
 
-        const card = document.createElement("img");
-        card.src = `/public/img/cards/Napoletane/${carta.carta}.jpg`;
-        card.classList.add("card");
-        handDiv.appendChild(card);
-      }
+      const label = document.createElement("div");
+      label.className = "label";
+      label.innerText = `Giocatore ${index + 2}`;
+      label.style.transform = `rotate(${-rotation}deg)`;
+
+      divOpp.appendChild(handDiv);
+      divOpp.appendChild(label);
+      container.appendChild(divOpp);
     });
-
-    // Etichetta col nome/ID
-    const label = document.createElement("div");
-    label.className = "label";
-    label.innerText = `Giocatore ${index + 2}`;
-    label.style.transform = `rotate(${-rotation}deg)`; // Raddrizza il testo
-
-    divOpp.appendChild(handDiv);
-    divOpp.appendChild(label);
-    container.appendChild(divOpp);
-  });
+  }); // fine requestAnimationFrame
 });
 
 callBtn.addEventListener("click", (event) => {
   event.preventDefault();
   const value = Number(callInput.value);
   socket.emit("callNumber", {
-    valueCall: value, 
+    valueCall: value,
     playerCode: playerId
   });
 });

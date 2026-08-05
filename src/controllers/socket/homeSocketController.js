@@ -232,7 +232,7 @@ module.exports = (io, socket, rooms) => {
         if (!room) return; // Verifico che la stanza effettivamente ancora esista per non fare spaccare tutto
 
         // Rimuovo il giocatore
-        room.players = room.players.filter((p) => p.playerId !== userId);
+        //room.players = room.players.filter((p) => p.playerId !== userId);
 
         // Se la stanza è vuota, la elimino
         if (room.players.length === 0) {

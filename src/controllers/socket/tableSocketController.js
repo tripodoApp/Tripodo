@@ -16,6 +16,7 @@ module.exports = (io, socket, rooms) => {
       (p) => p.playerId === playerCode,
     );
     player.socketId = socket.id;
+    player.ready = true; // Marca questo giocatore come pronto
     socket.join(roomName);
 
     const playerData = rooms[roomName].playerState.find(
@@ -24,24 +25,26 @@ module.exports = (io, socket, rooms) => {
     const gameState = rooms[roomName].gameState;
 
     socket.userId = playerCode;
-    //Questo serve per bypassare il problema del primo messaggio
-
-    const playerTurnoAttuale = rooms[roomName].players.find(
-      p => p.playerId === gameState.turnoAttualeId
-    );
 
     const payload = {
       playerData: playerData,
       gameState: gameState,
       players: rooms[roomName].players
-    }
-    if (playerTurnoAttuale.playerId === playerCode) {
+    };
 
-      socketMessaggio(roomName, "Tocca a" + " " + playerTurnoAttuale.playerName)
-      startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true)
-
-    }
+    // Invia subito i dati a questo giocatore
     socket.emit("initData", payload);
+
+    // Avvia il timer del turno solo quando TUTTI i giocatori sono pronti,
+    // evitando la race condition che resettava il timer ad ogni tableReady mobile.
+    const allReady = rooms[roomName].players.every(p => p.ready);
+    if (allReady) {
+      const playerTurnoAttuale = rooms[roomName].players.find(
+        p => p.playerId === gameState.turnoAttualeId
+      );
+      socketMessaggio(roomName, "Tocca a" + " " + playerTurnoAttuale.playerName);
+      startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true);
+    }
   };
 
   const playCard = data => {
