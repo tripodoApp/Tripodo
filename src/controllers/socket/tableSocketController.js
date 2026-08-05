@@ -35,14 +35,16 @@ module.exports = (io, socket, rooms) => {
     // Invia subito i dati a questo giocatore
     socket.emit("initData", payload);
 
-    // Avvia il timer del turno solo quando TUTTI i giocatori sono pronti,
-    // evitando la race condition che resettava il timer ad ogni tableReady mobile.
+    // Avvia il timer del turno solo quando TUTTI i giocatori sono pronti.
+    // Il flag gameStarted impedisce che allReady si ri-triggheri se un giocatore
+    // refresha la pagina dopo che tutti erano già connessi.
     const allReady = rooms[roomName].players.every(p => p.ready);
-    if (allReady) {
+    if (allReady && !rooms[roomName].gameStarted) {
+      rooms[roomName].gameStarted = true;
       const playerTurnoAttuale = rooms[roomName].players.find(
         p => p.playerId === gameState.turnoAttualeId
       );
-      socketMessaggio(roomName, "Tocca a" + " " + playerTurnoAttuale.playerName);
+      // startTurn invia già il suo messaggio nel game log — non ne serve un secondo
       startTurn(playerTurnoAttuale.playerId, rooms[roomName], roomName, playerTurnoAttuale.socketId, true);
     }
   };
