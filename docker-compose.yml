@@ -1,7 +1,7 @@
 services:
-  tripodo-game:
+  tripodo:
     build: .
-    container_name: tripodo-game
+    container_name: tripodo
     restart: unless-stopped
     environment:
       - NODE_ENV=production
