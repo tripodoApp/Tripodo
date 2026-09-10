@@ -1,8 +1,17 @@
 const socket = io();
 
-const playerId = localStorage.getItem('playerId');
+let playerId = localStorage.getItem('playerId');
+function getPlayerId() {
+  if (!playerId) {
+    playerId = localStorage.getItem('playerId');
+  }
+  return playerId;
+}
+
 if (!playerId) {
   socket.emit("generatePlayerID");
+} else {
+  socket.emit("checkActiveGame", { playerId: playerId });
 }
 
 // ELEMENTI
@@ -48,13 +57,16 @@ createRoomBtn.addEventListener("click", () => {
   const playerName = myNameInput.value.trim();
   if (!roomName) return alert("Inserisci un nome per la partita");
 
+  const currentId = getPlayerId();
+  if (!currentId) return alert("Inizializzazione in corso, attendi un istante...");
+
   const payload = {
     roomName: roomName,
     player: {
-        playerId: playerId,
+        playerId: currentId,
         playerName: playerName
     }
-};
+  };
   socket.emit("createRoom", payload);
 });
 
@@ -64,13 +76,16 @@ joinRoomBtn.addEventListener("click", () => {
   const playerName = myNameInput2.value.trim();
   if (!roomName) return alert("Inserisci il nome della partita");
 
+  const currentId = getPlayerId();
+  if (!currentId) return alert("Inizializzazione in corso, attendi un istante...");
+
   const payload = {
     roomName: roomName,
     player: {
-      idPlayer : playerId,
+      idPlayer : currentId,
       playerName: playerName
     }
-  }
+  };
   socket.emit("joinRoom", payload);
 });
 
@@ -106,17 +121,40 @@ socket.on("updatePlayers", data => {
 
 });
 
+socket.on("gameStarting", () => {
+  if (document.getElementById("gameStartingOverlay")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "gameStartingOverlay";
+  overlay.className = "game-starting-overlay";
+  overlay.innerHTML = `
+    <div class="game-starting-card">
+      <div class="game-starting-spinner"></div>
+      <h3>Partita in Avvio!</h3>
+      <p>L'Host ha avviato il gioco. Ingresso al tavolo...</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+});
+
 socket.on("gameStarted", () => {
-  
-  alert("Il gioco sta per iniziare!");
-  socket.emit("redirectTable");
+  if (startGameBtn) {
+    startGameBtn.disabled = true;
+    startGameBtn.textContent = "Avvio in corso... ⏳";
+  }
+  setTimeout(() => {
+    socket.emit("redirectTable");
+  }, 500);
 });
 
 //TEST
 socket.on("gameStartedTest", () => {
-  
-  alert("Il gioco sta per iniziare!");
-  socket.emit("redirectTableTest", 21);
+  if (startGameTest) {
+    startGameTest.disabled = true;
+    startGameTest.textContent = "Avvio test in corso... ⏳";
+  }
+  setTimeout(() => {
+    socket.emit("redirectTableTest", 21);
+  }, 500);
 });
 
 //REDIRECT TAVOLO
@@ -125,17 +163,51 @@ socket.on("goTable", data => {
   window.location.href = data;
 })
 
-socket.on ("returnIdPlayer", idPlayer => {
-
+socket.on("returnIdPlayer", idPlayer => {
+  playerId = idPlayer;
   localStorage.setItem('playerId', idPlayer);
-})
+  socket.emit("checkActiveGame", { playerId: idPlayer });
+});
+
+// GESTIONE PARTITA ATTIVA ESISTENTE
+const activeGameBanner = document.getElementById("activeGameBanner");
+const activeGameRoomName = document.getElementById("activeGameRoomName");
+const rejoinBtn = document.getElementById("rejoinBtn");
+
+socket.on("activeGameFound", data => {
+  if (activeGameBanner && activeGameRoomName) {
+    activeGameRoomName.textContent = data.roomName;
+    activeGameBanner.classList.remove("hidden");
+  }
+  createBtn.disabled = true;
+  createBtn.style.opacity = "0.5";
+  createBtn.title = "Hai una partita in corso";
+  joinBtn.disabled = true;
+  joinBtn.style.opacity = "0.5";
+  joinBtn.title = "Hai una partita in corso";
+});
+
+socket.on("noActiveGame", () => {
+  if (activeGameBanner) {
+    activeGameBanner.classList.add("hidden");
+  }
+  createBtn.disabled = false;
+  createBtn.style.opacity = "1";
+  createBtn.title = "";
+  joinBtn.disabled = false;
+  joinBtn.style.opacity = "1";
+  joinBtn.title = "";
+});
+
+if (rejoinBtn) {
+  rejoinBtn.addEventListener("click", () => {
+    window.location.href = "/public/tavoloComponent/tavolo.html";
+  });
+}
 
 //ERRORE SOCKET
 socket.on("error", (error) => {
-
     console.error(`Errore [${error.code}]: ${error.message}`);
-  
-    // ALERT DI PROVA
     alert(`Ops! ${error.message}`); 
 });
 

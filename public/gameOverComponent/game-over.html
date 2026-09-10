@@ -416,7 +416,8 @@ tr:last-child { border-bottom: 2px solid #f1c40f; }
         // Funzione per il redirect alla home
         function goHome() {
             // Notifica il server che il giocatore sta lasciando la stanza definitivamente
-            socket.emit('leave_game_final'); 
+            const playerId = localStorage.getItem('playerId');
+            socket.emit('leave_game_final', { playerId }); 
             window.location.href = '/'; // Redirect alla home
         }
 

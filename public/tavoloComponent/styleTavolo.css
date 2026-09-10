@@ -1,306 +1,958 @@
-/* RESET E BASE CON FONTS MODERNI */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap');
+/* ==========================================================================
+   RESET E DESIGN SYSTEM - LUXURY CARD ROOM THEME
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+  --bg-main: #0c0d12;
+  --bg-glass: rgba(18, 20, 28, 0.82);
+  --bg-card-panel: rgba(24, 27, 38, 0.94);
+  --gold-primary: #f1c40f;
+  --gold-dark: #b3910b;
+  --gold-glow: rgba(241, 196, 15, 0.35);
+  --gold-gradient: linear-gradient(135deg, #f5d76e 0%, #f1c40f 50%, #d4ac0d 100%);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-gold: rgba(241, 196, 15, 0.3);
+  --ease-scenic: cubic-bezier(0.25, 1, 0.5, 1);
+}
 
 * { 
   box-sizing: border-box; 
   margin: 0; 
   padding: 0; 
-  font-family: 'Inter', sans-serif; 
+  font-family: 'Inter', -apple-system, sans-serif; 
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   height: 100vh;
-  /* Deep, minimal dark theme */
-  background: #0f1016; 
-  background-image: radial-gradient(circle at top right, rgba(40,43,54,0.6) 0%, transparent 60%),
-                    radial-gradient(circle at bottom left, rgba(20,22,30,0.8) 0%, transparent 60%);
+  height: 100dvh;
+  width: 100vw;
+  background: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(35, 42, 60, 0.5) 0%, transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(20, 30, 22, 0.5) 0%, transparent 55%),
+    radial-gradient(circle at 50% 50%, #0c0d12 40%, #060709 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  color: var(--text-main);
+  user-select: none;
+}
+
+/* ==========================================================================
+   BARRA SUPERIORE HUD
+   ========================================================================== */
+.top-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: rgba(12, 13, 18, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 60;
+}
+
+.hud-left, .hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.hud-tag {
+  background: rgba(241, 196, 15, 0.18);
+  color: var(--gold-primary);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hud-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.turn-banner {
+  position: relative;
+  overflow: hidden;
+  background: rgba(241, 196, 15, 0.15);
+  border: 1px solid var(--border-gold);
+  color: var(--gold-primary);
+  padding: 6px 16px 8px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 15px rgba(241, 196, 15, 0.2);
+  transition: all 0.5s var(--ease-scenic);
+  animation: bannerPulse 2.5s infinite ease-in-out;
+}
+
+.turn-banner-timer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f1c40f, #e67e22);
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.8);
+  width: 100%;
+  transition: width 0.1s linear;
+}
+
+.hud-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  border: 1px solid var(--border-subtle);
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s var(--ease-scenic);
+}
+
+.hud-btn:hover {
+  background: rgba(241, 196, 15, 0.15);
+  border-color: var(--border-gold);
+  color: var(--gold-primary);
+  transform: translateY(-1px);
+}
+
+.badge-dot {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+/* ==========================================================================
+   AREA DI GIOCO RESPONSIVE (CONTAINER)
+   ========================================================================== */
+.game-container {
+  position: relative;
+  width: 100%;
+  height: calc(100dvh - 52px);
+  margin-top: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-/* AREA DI GIOCO CIRCOLARE */
-.game-container {
-  position: relative;
-  width: 900px;
-  height: 900px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* LIVELLO AVVERSARI */
+#opponents-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
 }
 
-/* IL TAVOLO VERDE */
+/* ==========================================================================
+   IL TAVOLO VERDE
+   ========================================================================== */
 .table {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle at 30% 30%, #2b7a37, #134621 70%);
+  width: min(65vmin, 490px);
+  height: min(65vmin, 490px);
+  background: radial-gradient(circle at 35% 35%, #236c30, #103f1d 75%);
   border-radius: 50%;
-  border: 18px solid #2a1b14;
+  border: clamp(10px, 2vmin, 18px) solid #281911;
   box-shadow: 
-    0 30px 60px rgba(0, 0, 0, 0.7), 
-    inset 0 0 50px rgba(0, 0, 0, 0.8),
-    inset 0 0 15px rgba(255, 255, 255, 0.1),
-    0 0 0 3px #422d21;
+    0 25px 60px rgba(0, 0, 0, 0.85), 
+    inset 0 0 50px rgba(0, 0, 0, 0.75),
+    inset 0 0 20px rgba(255, 255, 255, 0.08),
+    0 0 0 2px #442a1c,
+    0 0 40px rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1;
   position: relative;
+  z-index: 5;
+  transition: transform 0.6s var(--ease-scenic);
 }
 
 .table::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   border-radius: 50%;
-  background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
-  opacity: 0.05;
+  background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)"/></svg>');
+  opacity: 0.06;
   pointer-events: none;
 }
 
-/* CARTE SUL TAVOLO (Centro) */
-#table-cards {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  perspective: 1000px; /* 3D effect base */
+/* NOTIFICA TOAST CENTRALE AL TAVOLO */
+.table-toast {
+  position: absolute;
+  top: 15%;
+  background: rgba(14, 16, 24, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-gold);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(0.8rem, 2vmin, 0.95rem);
+  font-weight: 700;
+  text-align: center;
+  z-index: 25;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(241, 196, 15, 0.3);
+  animation: toastFloat 0.5s var(--ease-scenic);
+  pointer-events: none;
+  max-width: 80%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* CONTENITORI GIOCATORI */
-.player {
-  position: absolute;
+/* CARTE GIOCATE SUL TAVOLO */
+#table-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(8px, 1.5vmin, 16px);
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
+  z-index: 10;
+  max-width: 85%;
+}
+
+.table-card-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 2;
-  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  gap: 4px;
+  animation: cardDrop 0.55s var(--ease-scenic) forwards;
 }
 
-.hand {
-  display: flex;
-  gap: -15px; /* Sovrapposizione maggiore */
-  transition: gap 0.3s ease;
+.table-card-owner {
+  font-size: clamp(9px, 1.4vmin, 11px);
+  font-weight: 700;
+  color: #e2e8f0;
+  background: rgba(10, 12, 18, 0.75);
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
 }
 
-/* CARTE CON EFFETTI PIÙ REALI */
+/* ==========================================================================
+   CARTE DA GIOCO (NAPOLETANE)
+   ========================================================================== */
 .card {
-  width: 75px;
-  height: 110px; /* proporzione fissa per sicurezza */
+  width: clamp(52px, 8.5vmin, 76px);
+  height: clamp(78px, 12.8vmin, 114px);
   border-radius: 6px;
-  box-shadow: 2px 5px 15px rgba(0,0,0,0.4);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid rgba(255,255,255,0.1);
-  background-color: white; /* In case the image takes time to load */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.45);
+  background-color: #fff;
   background-size: cover;
   background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.45s var(--ease-scenic);
+  flex-shrink: 0;
 }
 
-/* EFFETTI AVVERSARI (Ventaglio) */
-.opponent .card {
-  margin-left: -40px;
-}
-.opponent .card:first-child { 
-  margin-left: 0; 
-}
-
-/* IL MIO LAYOUT (In basso, dritto) */
-.me {
-  bottom: 20px;
-  flex-direction: column-reverse;
+/* Carta vincente evidenziata con bagliore oro */
+.card.winning-card {
+  transform: scale(1.15) !important;
+  box-shadow: 0 0 30px var(--gold-primary), 0 0 10px #fff, 0 10px 25px rgba(0,0,0,0.8) !important;
+  border: 2px solid var(--gold-primary) !important;
+  z-index: 30 !important;
+  animation: winGlow 1s infinite alternate ease-in-out;
 }
 
-.me .hand {
-  gap: 5px; /* Spazio leggero per le proprie carte */
+/* ==========================================================================
+   AVVERSARI (.player.opponent)
+   ========================================================================== */
+.player.opponent {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 15;
+  transition: left 0.6s var(--ease-scenic), top 0.6s var(--ease-scenic), transform 0.6s var(--ease-scenic);
 }
 
-.me:hover .hand {
-  gap: 12px; /* Si espandono on hover sul player */
+.player.opponent .hand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.me .card:hover {
-  transform: translateY(-25px) scale(1.15) rotate(2deg);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.6);
-  z-index: 10;
-  border-color: rgba(241, 196, 15, 0.5); /* Glow sottile dorato */
+.player.opponent .card {
+  width: clamp(34px, 5vmin, 50px);
+  height: clamp(50px, 7.5vmin, 75px);
+  margin-left: clamp(-24px, -3vmin, -16px);
+  border-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
 }
 
-/* CONTROLLI GLASSMORPHISM */
-.controls {
-  margin-top: 25px;
-  background: rgba(20, 22, 30, 0.6);
+.player.opponent .card:first-child {
+  margin-left: 0;
+}
+
+/* CHIP / PILLOLA DEL GIOCATORE */
+.player-pill {
+  background: rgba(18, 21, 30, 0.88);
   backdrop-filter: blur(10px);
-  padding: 12px 20px;
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
-  gap: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  gap: 6px;
+  font-size: clamp(10px, 1.5vmin, 12px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.45s var(--ease-scenic);
+  white-space: nowrap;
 }
 
-.controls form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-}
-
-input { 
-  width: 70px; 
-  padding: 10px; 
-  border-radius: 6px; 
-  border: 1px solid rgba(255,255,255,0.2); 
-  text-align: center; 
-  background: rgba(0,0,0,0.3);
-  color: white;
+.player-name {
   font-weight: 600;
-  outline: none;
-  transition: all 0.3s ease;
-}
-input:focus {
-  border-color: #f1c40f;
-  background: rgba(0,0,0,0.5);
-  box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+  color: #f8fafc;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-button { 
-  padding: 10px 20px; 
-  cursor: pointer; 
-  background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
+.dealer-crown {
+  background: var(--gold-gradient);
   color: #1a1a1a;
-  border: none; 
-  border-radius: 6px; 
-  font-family: 'Outfit', sans-serif;
-  font-weight: 700; 
-  text-transform: uppercase;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 0 #b3910b;
+  font-weight: 800;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(241, 196, 15, 0.4);
 }
 
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #b3910b, 0 10px 15px rgba(0,0,0,0.3);
-}
-button:active {
-  transform: translateY(4px);
-  box-shadow: 0 0 0 #b3910b;
-}
-
-/* LOG EVENTI */
-#game-log {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 280px;
-  max-height: 200px;
-  overflow-y: auto;
-  background: rgba(15, 16, 22, 0.75);
-  backdrop-filter: blur(12px);
+.stats-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: clamp(9px, 1.4vmin, 11px);
   color: #cbd5e1;
-  font-size: 13px;
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  scrollbar-width: thin;
-  scrollbar-color: #f1c40f rgba(0,0,0,0.2);
 }
-#game-log::-webkit-scrollbar { width: 6px; }
-#game-log::-webkit-scrollbar-thumb { background: #f1c40f; border-radius: 3px; }
 
-/* MODALI E TABELLE PUNTEGGI */
-.table-modal {
-  width: 85% !important;
-  max-width: 700px;
-  max-height: 85vh;
+.stats-separator {
+  opacity: 0.3;
+}
+
+/* TURNO ATTIVO CON EFFETTO GLOW ORO PULSANTE */
+.active-turn-glow {
+  border-color: var(--gold-primary) !important;
+  box-shadow: 0 0 18px rgba(241, 196, 15, 0.6), inset 0 0 10px rgba(241, 196, 15, 0.2) !important;
+  animation: turnPulse 2s infinite ease-in-out !important;
+}
+
+/* TIMER BAR INTEGRATA NEL BADGE */
+.player-timer-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f1c40f, #e67e22);
+  box-shadow: 0 0 10px rgba(241, 196, 15, 0.9);
+  width: 100%;
+  transition: width 0.1s linear;
+  border-radius: 0 0 20px 20px;
+  z-index: 5;
+}
+
+/* ==========================================================================
+   IL MIO PROFILO E LA MIA MANO (.me)
+   ========================================================================== */
+.player.me {
+  position: absolute;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 105; /* Elevato sopra il backdrop dell'overlay di chiamata (z-index 100) per visibilità diretta delle carte */
+  transition: all 0.45s var(--ease-scenic);
+}
+
+.my-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player.me .hand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 5px;
+}
+
+.player.me .card {
+  margin-left: clamp(-20px, -2.5vmin, -10px);
+  cursor: pointer;
+}
+
+.player.me .card:first-child {
+  margin-left: 0;
+}
+
+/* QUANDO TOCCA A ME GIOCARE */
+.player.me.my-turn .card {
+  cursor: pointer;
+  filter: brightness(1.05);
+}
+
+.player.me.my-turn .card:hover {
+  transform: translateY(-24px) scale(1.15) rotate(1.5deg);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.75), 0 0 20px var(--gold-glow);
+  z-index: 40;
+  border-color: var(--gold-primary);
+}
+
+/* QUANDO NON TOCCA A ME (Disattiva visivamente) */
+.player.me.not-my-turn .card {
+  cursor: default;
+  opacity: 0.8;
+  filter: brightness(0.85);
+}
+
+.player.me.not-my-turn .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   OVERLAY DI CHIAMATA (BIDDING UI CON BOTTONI RAPIDI)
+   ========================================================================== */
+.bidding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 16, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  /* Spazio in basso per lasciare visibile la mano del giocatore */
+  padding-bottom: clamp(110px, 22vh, 180px);
+  animation: fadeIn 0.35s var(--ease-scenic);
+}
+
+.bidding-card {
+  position: relative;
+  background: var(--bg-card-panel);
+  border: 1px solid var(--border-gold);
+  border-radius: 24px;
+  padding: 24px 22px 18px;
+  width: min(90vw, 440px);
+  text-align: center;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.85), 
+    0 0 30px rgba(241, 196, 15, 0.15),
+    inset 0 0 20px rgba(255, 255, 255, 0.02);
+  animation: modalPop 0.4s var(--ease-scenic);
+}
+
+.bidding-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 26px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.bidding-close-btn:hover {
+  color: var(--gold-primary);
+  transform: scale(1.15);
+}
+
+.bidding-header .bidding-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.bidding-header h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.bidding-header p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.bidding-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0 10px;
+}
+
+.bidding-chip {
+  width: clamp(48px, 9vmin, 58px);
+  height: clamp(48px, 9vmin, 58px);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #242938, #181b24);
+  color: var(--gold-primary);
+  border: 2px solid rgba(241, 196, 15, 0.4);
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.35s var(--ease-scenic);
+}
+
+.bidding-chip:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.12);
+  background: var(--gold-gradient);
+  color: #111;
+  border-color: #fff;
+  box-shadow: 0 10px 25px rgba(241, 196, 15, 0.5);
+}
+
+.bidding-chip:active:not(:disabled) {
+  transform: translateY(1px) scale(0.96);
+}
+
+/* VALORE NEGATO PER IL BANCO */
+.bidding-chip:disabled, .bidding-chip.forbidden {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #191418;
+  position: relative;
+  text-decoration: line-through;
+}
+
+.bidding-notice {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-size: 0.8rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
+.bidding-view-cards-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 16px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: all 0.25s;
+}
+
+.bidding-view-cards-btn:hover {
+  background: rgba(241, 196, 15, 0.15);
+  border-color: var(--border-gold);
+  color: #fff;
+}
+
+.btn-open-bidding {
+  background: var(--gold-gradient);
+  color: #111;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+  animation: bannerPulse 2s infinite ease-in-out;
+  transition: transform 0.2s;
+  margin-left: 8px;
+}
+
+.btn-open-bidding:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* ==========================================================================
+   PANNELLO FLOTTANTE / CASSETTO CHAT & LOG
+   ========================================================================== */
+.game-log-panel {
+  position: fixed;
+  top: 52px;
+  right: 0;
+  width: min(340px, 85vw);
+  height: calc(100dvh - 52px);
+  background: rgba(15, 17, 25, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  z-index: 70;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6);
+  transition: transform 0.5s var(--ease-scenic);
+}
+
+.game-log-panel.closed {
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.log-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.log-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.log-close-btn:hover {
+  color: var(--gold-primary);
+}
+
+.game-log-content {
+  flex: 1;
   overflow-y: auto;
-  background: rgba(20, 22, 30, 0.8) !important;
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(241, 196, 15, 0.2);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-primary) rgba(0,0,0,0.2);
+}
+
+.game-log-content::-webkit-scrollbar {
+  width: 5px;
+}
+.game-log-content::-webkit-scrollbar-thumb {
+  background: rgba(241, 196, 15, 0.4);
+  border-radius: 3px;
+}
+
+.log-row {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+  animation: fadeIn 0.3s ease;
+}
+
+.log-row.presa {
+  border-left-color: var(--gold-primary);
+  background: rgba(241, 196, 15, 0.06);
+  color: #fef08a;
+}
+
+.log-row.chiamata {
+  border-left-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.log-row.turno {
+  border-left-color: #c084fc;
+  background: rgba(192, 132, 252, 0.06);
+}
+
+/* ==========================================================================
+   MODALE PUNTEGGI (COMPLETA E RESPONSIVE)
+   ========================================================================== */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background-color: rgba(10, 11, 16, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-content.table-modal {
+  background: var(--bg-card-panel);
+  border: 1px solid var(--border-gold);
+  border-radius: 24px;
+  width: min(94vw, 820px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 35px rgba(241, 196, 15, 0.15);
+  animation: modalPop 0.4s var(--ease-scenic);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.modal-header h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.close-btn {
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--gold-primary);
+  transform: rotate(90deg);
 }
 
 .table-container {
-  margin-top: 15px;
   overflow-x: auto;
-  background: rgba(0,0,0,0.3);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-primary) rgba(0,0,0,0.2);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   color: #e2e8f0;
+  font-size: 0.9rem;
 }
 
 th, td {
-  padding: 16px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 14px;
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 th {
-  background-color: rgba(241, 196, 15, 0.1);
-  color: #fceea7;
+  background: rgba(241, 196, 15, 0.12);
+  color: var(--gold-primary);
   font-family: 'Outfit', sans-serif;
+  font-weight: 700;
   text-transform: uppercase;
-  font-size: 0.95em;
-  letter-spacing: 1px;
-  border-bottom: 2px solid rgba(241, 196, 15, 0.4);
-}
-
-tr { transition: background 0.2s; }
-tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-tr:hover { background: rgba(255,255,255,0.05); }
-
-tr:last-child {
-  border-bottom: 2px solid #f1c40f;
-}
-
-/* FINESTRA MODALE BASE */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  position: sticky;
   top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(10, 10, 14, 0.85);
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.3s ease;
+  z-index: 2;
 }
 
+tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+tr:hover { background: rgba(255, 255, 255, 0.05); }
+
+/* ==========================================================================
+   ANIMAZIONI SCENOGRAFICHE MORBIDE
+   ========================================================================== */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.modal-content {
-  background-color: rgba(30, 32, 40, 0.9);
-  margin: 10% auto;
-  padding: 30px;
-  border-radius: 16px;
-  width: 50%;
-  max-width: 450px;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92) translateY(15px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.close-btn {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  font-size: 28px;
-  cursor: pointer;
-  color: rgba(255,255,255,0.5);
-  transition: all 0.2s ease;
+@keyframes cardDrop {
+  0% { 
+    opacity: 0; 
+    transform: translateY(-40px) scale(0.8) rotate(var(--rot, 0deg)); 
+  }
+  70% { 
+    transform: translateY(4px) scale(1.03) rotate(var(--rot, 0deg)); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1) rotate(var(--rot, 0deg)); 
+  }
 }
-.close-btn:hover {
-  color: #f1c40f;
-  transform: rotate(90deg);
+
+@keyframes winGlow {
+  0% { 
+    box-shadow: 0 0 20px var(--gold-primary), 0 0 5px #fff; 
+  }
+  100% { 
+    box-shadow: 0 0 35px var(--gold-primary), 0 0 15px #fff, 0 15px 30px rgba(0,0,0,0.8); 
+  }
+}
+
+@keyframes bannerPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+  50% { transform: scale(1.03); box-shadow: 0 4px 20px rgba(241, 196, 15, 0.35); }
+}
+
+@keyframes turnPulse {
+  0%, 100% { 
+    box-shadow: 0 0 14px rgba(241, 196, 15, 0.5); 
+    border-color: rgba(241, 196, 15, 0.7); 
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(241, 196, 15, 0.9), inset 0 0 10px rgba(241, 196, 15, 0.4); 
+    border-color: #fff; 
+  }
+}
+
+@keyframes toastFloat {
+  0% { opacity: 0; transform: translateY(15px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* UTILITIES */
+.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   OTTIMIZZAZIONE MOBILE (SMARTPHONE E PORTRAIT)
+   ========================================================================== */
+@media (max-width: 640px) {
+  .top-hud {
+    padding: 0 10px;
+    height: 48px;
+  }
+  
+  .hud-btn .btn-text {
+    display: none;
+  }
+  
+  .hud-btn {
+    padding: 6px 10px;
+  }
+  
+  .game-container {
+    height: calc(100dvh - 48px);
+    margin-top: 48px;
+  }
+
+  .table {
+    width: min(78vmin, 380px);
+    height: min(78vmin, 380px);
+  }
+
+  .player.me {
+    bottom: 6px;
+  }
+}
+
+@media (max-height: 540px) {
+  .bidding-overlay {
+    padding-bottom: 75px;
+  }
+  .bidding-card {
+    padding: 12px 18px 10px;
+    width: min(92vw, 420px);
+  }
+  .bidding-header h3 {
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+  }
+  .bidding-header p {
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+  }
+  .bidding-chip {
+    width: 38px;
+    height: 38px;
+    font-size: 0.95rem;
+  }
+  .bidding-notice {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    margin-top: 6px;
+  }
+  .bidding-view-cards-btn {
+    margin-top: 8px;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+  }
 }

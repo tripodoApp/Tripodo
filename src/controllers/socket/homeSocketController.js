@@ -14,6 +14,17 @@ module.exports = (io, socket, rooms) => {
       });
     }
 
+    // Controllo se il giocatore ha già una partita in corso
+    const activeGameRoom = Object.keys(rooms).find(r => 
+      rooms[r].gameStarted && rooms[r].players.some(p => p.playerId === playerId)
+    );
+    if (activeGameRoom) {
+      return socket.emit("error", {
+        code: 403,
+        message: `Hai già una partita in corso nella stanza "${activeGameRoom}". Riconnettiti o attendi che finisca!`,
+      });
+    }
+
     if (rooms[roomName]) {
       return socket.emit("error", {
         code: 500,
@@ -65,6 +76,17 @@ module.exports = (io, socket, rooms) => {
       });
     }
 
+    // Controllo se il giocatore ha già un'ALTRA partita in corso diversa da questa
+    const activeGameRoom = Object.keys(rooms).find(r => 
+      r !== roomName && rooms[r].gameStarted && rooms[r].players.some(p => p.playerId === idPlayer)
+    );
+    if (activeGameRoom) {
+      return socket.emit("error", {
+        code: 403,
+        message: `Hai già una partita in corso nella stanza "${activeGameRoom}". Riconnettiti o attendi che finisca!`,
+      });
+    }
+
     //CONTROLLO SE E' GIA' NELLA STANZA
     const alreadyInRoom = room.players.some(
       (player) => player.playerId === idPlayer,
@@ -100,6 +122,7 @@ module.exports = (io, socket, rooms) => {
     );
     if (!roomName) return;
 
+    io.to(roomName).emit("gameStarting");
     socket.emit("gameStarted");
     console.log(`Partita ${roomName} iniziata dall'host ${socket.id}`);
   };
@@ -140,6 +163,7 @@ module.exports = (io, socket, rooms) => {
     rooms[roomId].gameState.ultimaPresa =
       rooms[roomId].gameState.turnoAttualeId;
 
+    rooms[roomId].gameStarted = true;
     io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
     //socketMessaggio(roomId, "E' il turno di x");
   };
@@ -152,6 +176,7 @@ module.exports = (io, socket, rooms) => {
     );
     if (!roomName) return;
 
+    io.to(roomName).emit("gameStarting");
     socket.emit("gameStartedTest");
     console.log(`Partita ${roomName} iniziata dall'host ${socket.id}`);
   };
@@ -193,6 +218,7 @@ module.exports = (io, socket, rooms) => {
     rooms[roomId].gameState.ultimaPresa =
       rooms[roomId].gameState.turnoAttualeId;
 
+    rooms[roomId].gameStarted = true;
     io.to(roomId).emit("goTable", "./public/tavoloComponent/tavolo.html");
   };
 
@@ -231,8 +257,10 @@ module.exports = (io, socket, rooms) => {
         const room = rooms[foundRoomName];
         if (!room) return; // Verifico che la stanza effettivamente ancora esista per non fare spaccare tutto
 
-        // Rimuovo il giocatore
-        //room.players = room.players.filter((p) => p.playerId !== userId);
+        // Rimuovo il giocatore solo se la partita non è ancora iniziata per evitare giocatori fantasma
+        if (!room.gameStarted) {
+          room.players = room.players.filter((p) => p.playerId !== userId);
+        }
 
         // Se la stanza è vuota, la elimino
         if (room.players.length === 0) {
@@ -242,18 +270,48 @@ module.exports = (io, socket, rooms) => {
         }
 
         // Cambio host stanza se il socket che è uscito era l'host
-        //(DA CLAUDE CAPIRE) Confronto sul socketId (non playerId) perché room.host è sempre uno socketId
-        if (room.host === userId) {
-          room.host = room.players[0].playerId;
+        if (room.host === socket.id && room.players.length > 0) {
+          room.host = room.players[0].socketId;
         }
 
-        // Notifica gli altri ( questo me lo ha detto Gemini, devo capire un attimo meglio)
+        // Notifica gli altri giocatori nella stanza
         io.to(foundRoomName).emit("updatePlayers", {
           players: room.players,
           host: room.host,
         });
       }
     }, 3000);
+  };
+
+  const checkActiveGame = (data) => {
+    const pId = data && data.playerId;
+    if (!pId) return;
+    socket.userId = pId;
+
+    const activeRoomName = Object.keys(rooms).find(r => 
+      rooms[r].gameStarted && rooms[r].players.some(p => p.playerId === pId)
+    );
+
+    if (activeRoomName) {
+      socket.emit("activeGameFound", { roomName: activeRoomName });
+    } else {
+      socket.emit("noActiveGame");
+    }
+  };
+
+  const leaveGameFinal = (data) => {
+    const playerCode = (data && data.playerId) || socket.userId;
+    if (!playerCode) return;
+    const roomName = Object.keys(rooms).find(r => 
+      rooms[r].players.some(p => p.playerId === playerCode)
+    );
+    if (!roomName || !rooms[roomName]) return;
+
+    const room = rooms[roomName];
+    if (room.turnTimer) clearTimeout(room.turnTimer);
+    if (room.emptyRoomTimer) clearTimeout(room.emptyRoomTimer);
+    delete rooms[roomName];
+    console.log(`[Home] Stanza ${roomName} eliminata su leave_game_final.`);
   };
 
   //DICHIARAZIONE SOCKET
@@ -264,7 +322,9 @@ module.exports = (io, socket, rooms) => {
   socket.on("startGameTest", startGameTest);
   socket.on("generatePlayerID", generatePlayerID);
   socket.on("redirectTable", redirectTable);
-  socket.on("redirectTableTest", redirectTableTest)
+  socket.on("redirectTableTest", redirectTableTest);
+  socket.on("checkActiveGame", checkActiveGame);
+  socket.on("leave_game_final", leaveGameFinal);
 }
 
 
