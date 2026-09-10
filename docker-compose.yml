@@ -1,0 +1,14 @@
+services:
+  tripodo-game:
+    build: .
+    container_name: tripodo-game
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true
