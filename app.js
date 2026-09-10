@@ -1,6 +1,16 @@
 const express = require("express");
 const app = express();
-app.use(express.static('public'));
+const staticOptions = {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html") || filePath.endsWith(".js") || filePath.endsWith(".css")) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    }
+  }
+};
+
+app.use(express.static('public', staticOptions));
 const tripodo = require("./src/utils/tripodo");
 const homeSocketController = require("./src/controllers/socket/homeSocketController");
 
@@ -13,7 +23,7 @@ const tableSocketController = require("./src/controllers/socket/tableSocketContr
 
 var io = require("socket.io")(http);
 
-app.use(express.static(path.join(__dirname, "")));
+app.use(express.static(path.join(__dirname, ""), staticOptions));
 
 app.get("/", (req, res) => {
   res.sendFile("./public/homeComponent/home.html", {
