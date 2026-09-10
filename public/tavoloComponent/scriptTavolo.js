@@ -431,30 +431,46 @@ window.addEventListener("resize", () => {
 // GESTIONE SOCKET EVENTS
 // ==========================================================================
 socket.on("initData", data => {
-  const { playerData, gameState, players } = data;
+  const { playerData, gameState, players, playersSummary } = data;
   currentGameState = gameState;
   currentPlayerData = playerData;
   allPlayers = players;
 
-  // Inizializza stats se non presenti
-  players.forEach(p => {
-    if (!playerStats[p.playerId]) {
-      playerStats[p.playerId] = { call: "-", tricks: 0 };
+  // Sincronizzazione autoritativa di TUTTE le statistiche (chiamate e prese) inviate dal server
+  if (playersSummary && Array.isArray(playersSummary)) {
+    playersSummary.forEach(ps => {
+      playerStats[ps.playerId] = {
+        call: (ps.haChiamato && ps.numeroChiamata !== null && ps.numeroChiamata !== undefined) ? ps.numeroChiamata : "-",
+        tricks: ps.numeroPrese !== undefined ? ps.numeroPrese : 0
+      };
+      updatePlayerStatsUI(ps.playerId);
+    });
+  } else {
+    // Fallback se playersSummary non è presente
+    players.forEach(p => {
+      if (!playerStats[p.playerId]) {
+        playerStats[p.playerId] = { call: "-", tricks: 0 };
+      }
+    });
+    if (playerData) {
+      if (!playerStats[playerId]) playerStats[playerId] = { call: "-", tricks: 0 };
+      if (playerData.haChiamato) {
+        playerStats[playerId].call = playerData.numeroChiamata;
+      } else if (gameState.giroChiamata) {
+        playerStats[playerId].call = "-";
+      }
+      if (playerData.numeroPrese !== undefined) {
+        playerStats[playerId].tricks = playerData.numeroPrese;
+      }
+      updatePlayerStatsUI(playerId);
     }
-  });
+  }
 
   // Nome e stato del giocatore locale
   const localPlayer = players.find(p => p.playerId === playerId);
   if (localPlayer && myPlayerName) {
     myPlayerName.textContent = localPlayer.playerName;
   }
-  if (playerData.numeroChiamata !== undefined && playerData.numeroChiamata !== 0) {
-    playerStats[playerId].call = playerData.numeroChiamata;
-  }
-  if (playerData.numeroPrese !== undefined) {
-    playerStats[playerId].tricks = playerData.numeroPrese;
-  }
-  updatePlayerStatsUI(playerId);
 
   // Badge Mazziere (Banco)
   const isDealer = gameState.bancoId === playerId;
@@ -569,22 +585,10 @@ socket.on("gameLog", data => {
     showTableToast(msg);
   }
 
-  // 4. Aggiornamento statistiche dai messaggi
-  allPlayers.forEach(p => {
-    if (msg.includes(`${p.playerName} ha chiamato`)) {
-      const match = msg.match(/ha chiamato (\d+)/);
-      if (match) {
-        if (!playerStats[p.playerId]) playerStats[p.playerId] = { call: "-", tricks: 0 };
-        playerStats[p.playerId].call = match[1];
-        updatePlayerStatsUI(p.playerId);
-      }
-    }
-    if (msg.includes(`${p.playerName} ha preso la mano`)) {
-      if (!playerStats[p.playerId]) playerStats[p.playerId] = { call: "-", tricks: 0 };
-      playerStats[p.playerId].tricks = (playerStats[p.playerId].tricks || 0) + 1;
-      updatePlayerStatsUI(p.playerId);
-    }
-  });
+  // 4. Notifiche speciali di round
+  if (msg.includes("Fine Round")) {
+    showTableToast(`📢 ${msg}`);
+  }
 });
 
 socket.on("chiamataBanco", data => {
@@ -636,10 +640,20 @@ socket.on("playCardHandShake", data => {
 });
 
 socket.on("cardsLastRound", data => {
-  const { playerData, gameState, players, carte } = data;
+  const { playerData, gameState, players, carte, playersSummary } = data;
   currentGameState = gameState;
   currentPlayerData = playerData;
   allPlayers = players;
+
+  if (playersSummary && Array.isArray(playersSummary)) {
+    playersSummary.forEach(ps => {
+      playerStats[ps.playerId] = {
+        call: (ps.haChiamato && ps.numeroChiamata !== null && ps.numeroChiamata !== undefined) ? ps.numeroChiamata : "-",
+        tricks: ps.numeroPrese !== undefined ? ps.numeroPrese : 0
+      };
+      updatePlayerStatsUI(ps.playerId);
+    });
+  }
 
   if (roundText) roundText.textContent = "Ultimo Round (Carte Scoperte)";
   if (roundPhase) roundPhase.textContent = "Ultima Mano";

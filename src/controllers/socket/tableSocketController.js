@@ -41,7 +41,8 @@ module.exports = (io, socket, rooms) => {
         socket.emit("initData", {
           playerData: playerData,
           gameState: rooms[roomName].gameState,
-          players: rooms[roomName].players
+          players: rooms[roomName].players,
+          playersSummary: buildPlayersSummary(rooms[roomName])
         });
       }
       return;
@@ -127,6 +128,7 @@ module.exports = (io, socket, rooms) => {
       gameState: rooms[roomName].gameState,
       players: rooms[roomName].players,
       carte: carteGiocatori,
+      playersSummary: buildPlayersSummary(rooms[roomName]),
     };
 
     socket.emit("cardsLastRound", payload);
@@ -161,6 +163,7 @@ module.exports = (io, socket, rooms) => {
       playerData: player,
       gameState: rooms[roomName].gameState,
       players: rooms[roomName].players,
+      playersSummary: buildPlayersSummary(rooms[roomName]),
     };
 
     socket.emit("initData", payload);
@@ -256,10 +259,28 @@ function socketMessaggio(roomName, messaggio) {
   }
 }
 
+// Costruisce il riepilogo pubblico di tutti i giocatori (prese e chiamate sincronizzate)
+function buildPlayersSummary(room) {
+  if (!room || !room.players) return [];
+  return room.players.map(p => {
+    const pState = (room.playerState || []).find(ps => ps.idPlayer === p.playerId);
+    return {
+      playerId: p.playerId,
+      playerName: p.playerName,
+      numeroPrese: pState ? (pState.numeroPrese || 0) : 0,
+      numeroChiamata: (pState && pState.haChiamato) ? pState.numeroChiamata : "-",
+      haChiamato: pState ? !!pState.haChiamato : false,
+      cardCount: (pState && pState.cardsHands) ? pState.cardsHands.length : 0
+    };
+  });
+}
+
 // Invia a ogni client nella stanza il proprio payload initData aggiornato
 function sendInitDataToAll(roomName) {
   const room = roomsIstance[roomName];
   if (!room || !ioIstance) return;
+
+  const summary = buildPlayersSummary(room);
 
   room.players.forEach(p => {
     const pData = room.playerState.find(ps => ps.idPlayer === p.playerId);
@@ -267,7 +288,8 @@ function sendInitDataToAll(roomName) {
       ioIstance.to(p.socketId).emit("initData", {
         playerData: pData,
         gameState: room.gameState,
-        players: room.players
+        players: room.players,
+        playersSummary: summary
       });
     }
   });
@@ -380,6 +402,7 @@ function processCallNumber(playerCode, valueCall, roomName) {
   }
 
   player.numeroChiamata = valueCall;
+  player.haChiamato = true;
 
   const currentPl = room.players.find(p => p.playerId === playerCode);
   socketMessaggio(roomName, `${currentPl ? currentPl.playerName : 'Giocatore'} ha chiamato ${valueCall}`);
@@ -467,10 +490,12 @@ function processPlayCard(playerCode, card, roomName) {
     const cartaMassima = tripodo.calcoloMassimoTurno(room.gameState.cardsTable);
     const playerPresa = room.players.find(p => p.playerId === cartaMassima.idPlayer);
 
-    setTimeout(() => {
-      tripodo.setPresa(cartaMassima.idPlayer, room.playerState);
-      socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
+    // Assegna subito la presa e sincronizza così tutti vedono il contatore aggiornarsi in diretta durante la pausa
+    tripodo.setPresa(cartaMassima.idPlayer, room.playerState);
+    socketMessaggio(roomName, `${playerPresa.playerName} ha preso la mano`);
+    sendInitDataToAll(roomName);
 
+    setTimeout(() => {
       // Svuota tavolo
       room.gameState.cardsTable = [];
 
@@ -484,10 +509,14 @@ function processPlayCard(playerCode, card, roomName) {
         room.gameState.currentRoundHand = 1;
         tripodo.fineRound(room);
         room.gameState.valoreNegato = null;
+        room.playerState.forEach(p => {
+          p.haChiamato = false;
+        });
         const playerRound = room.players.find(
           p => p.playerId === room.gameState.turnoAttualeId
         );
-        socketMessaggio(roomName, `${playerRound.playerName} deve chiamare`);
+        socketMessaggio(roomName, `Fine Round! Calcolo punteggi completato.`);
+        socketMessaggio(roomName, `${playerRound.playerName} deve chiamare per il Round ${room.gameState.currentRound}`);
         startTurn(playerRound.playerId, room, roomName);
 
         // Aggiorna punteggi

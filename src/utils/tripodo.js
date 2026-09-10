@@ -12,6 +12,7 @@ function initPlayer(idPlayer, numberPlayers, index, carte) {
     cardsHands: carte,
     numeroPrese: 0,
     numeroChiamata: 0,
+    haChiamato: false,
     currentRound: 1,
     currentRoundHand: 0,
     totalRound: 40 / numberPlayers,
@@ -204,6 +205,7 @@ function calcoloPunteggio(playerState, gameState) {
     //Reset punteggio mano
     player.numeroPrese = 0;
     player.numeroChiamata = 0;
+    player.haChiamato = false;
 
   })
 }
