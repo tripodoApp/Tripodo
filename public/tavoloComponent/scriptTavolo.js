@@ -1,6 +1,20 @@
 const socket = io();
 const playerId = localStorage.getItem("playerId");
-socket.emit("tableReady", playerId);
+
+function emitTableReady() {
+  const pid = localStorage.getItem("playerId");
+  if (pid) {
+    socket.emit("tableReady", pid);
+  }
+}
+
+socket.on("connect", () => {
+  console.log("Socket connesso:", socket.id);
+  emitTableReady();
+});
+
+// Invio iniziale
+emitTableReady();
 
 let canPlay = true;
 let currentGameState = null;
@@ -54,6 +68,9 @@ const closeBtn = document.querySelector(".close-btn");
 
 // GESTIONE MODALE PUNTEGGIO
 btnPunteggio.onclick = function () {
+  if (currentGameState && currentGameState.punteggi && allPlayers && allPlayers.length > 0) {
+    updateScoreTable(allPlayers, currentGameState.punteggi);
+  }
   modal.style.display = "flex";
 };
 closeBtn.onclick = function () {
@@ -331,9 +348,11 @@ function renderOpponents(players, currentRoundCardCount, isLastRound, lastRoundC
   const centerX = containerWidth / 2;
   const centerY = containerHeight / 2;
 
+  const isLandscape = containerWidth > containerHeight;
+
   // Calcolo raggio ellittico per adattarsi a landscape e portrait
-  const marginX = Math.min(Math.max(50, containerWidth * 0.1), 110);
-  const marginY = Math.min(Math.max(45, containerHeight * 0.09), 90);
+  const marginX = isLandscape ? Math.min(containerWidth * 0.16, 160) : Math.min(Math.max(45, containerWidth * 0.1), 100);
+  const marginY = isLandscape ? Math.min(containerHeight * 0.14, 55) : Math.min(Math.max(40, containerHeight * 0.08), 85);
 
   const radiusX = (tableWidth / 2) + marginX;
   const radiusY = (tableHeight / 2) + marginY;
@@ -355,8 +374,17 @@ function renderOpponents(players, currentRoundCardCount, isLastRound, lastRoundC
       angle = startAngle + (index * (endAngle - startAngle)) / (numOpponents - 1);
     }
 
-    const x = centerX + radiusX * Math.cos(angle);
-    const y = centerY + radiusY * Math.sin(angle);
+    let rawX = centerX + radiusX * Math.cos(angle);
+    let rawY = centerY + radiusY * Math.sin(angle);
+
+    // Margini di sicurezza per non finire sopra la HUD o fuori dai bordi
+    const safeLeft = 50;
+    const safeRight = containerWidth - 50;
+    const safeTop = isLandscape ? 38 : 45;
+    const safeBottom = containerHeight - (isLandscape ? 60 : 95);
+
+    const x = Math.max(safeLeft, Math.min(safeRight, rawX));
+    const y = Math.max(safeTop, Math.min(safeBottom, rawY));
 
     const oppDiv = document.createElement("div");
     oppDiv.className = "player opponent";
@@ -420,11 +448,18 @@ function renderOpponents(players, currentRoundCardCount, isLastRound, lastRoundC
   });
 }
 
-// RICALCOLO LAYOUT SU RIDIMENSIONAMENTO SCHERMO
-window.addEventListener("resize", () => {
+// RICALCOLO LAYOUT SU RIDIMENSIONAMENTO E ORIENTAMENTO SCHERMO
+function recalculateLayout() {
   if (allPlayers.length > 0 && currentPlayerData) {
     renderOpponents(allPlayers, currentPlayerData.cardsHands.length, currentGameState?.isLastRound);
   }
+}
+
+window.addEventListener("resize", () => {
+  recalculateLayout();
+});
+window.addEventListener("orientationchange", () => {
+  setTimeout(recalculateLayout, 150);
 });
 
 // ==========================================================================
@@ -435,6 +470,11 @@ socket.on("initData", data => {
   currentGameState = gameState;
   currentPlayerData = playerData;
   allPlayers = players;
+
+  // Sincronizzazione immediata della tabella punteggi se presente nel gameState
+  if (gameState && gameState.punteggi && players && players.length > 0) {
+    updateScoreTable(players, gameState.punteggi);
+  }
 
   // Sincronizzazione autoritativa di TUTTE le statistiche (chiamate e prese) inviate dal server
   if (playersSummary && Array.isArray(playersSummary)) {
@@ -507,6 +547,9 @@ socket.on("initData", data => {
   } else {
     myPill.classList.remove("active-turn-glow");
   }
+
+  // Abilitazione gioco carta: se è il mio turno e non è la fase di chiamata, posso giocare
+  canPlay = isMyTurn && !gameState.giroChiamata;
 
   // Controllo ruolo Banco per il giocatore locale
   const isBanco = (gameState.bancoId === playerId);
@@ -676,6 +719,11 @@ socket.on("cardsLastRound", data => {
     };
     myHand.appendChild(img);
   }
+
+  if (gameState && gameState.punteggi && players && players.length > 0) {
+    updateScoreTable(players, gameState.punteggi);
+  }
+  canPlay = (gameState.turnoAttualeId === playerId);
 
   renderOpponents(players, 1, true, carte);
 });

@@ -35,7 +35,7 @@ module.exports = (io, socket, rooms) => {
       console.log(`[Stanza ${roomName}] Giocatore ${player.playerName} ricollegato: cancellazione stanza annullata.`);
     }
 
-    // Se la partita è già iniziata (es. refresh o riconnessione), manda subito initData al singolo giocatore
+    // Se la partita è già iniziata (es. refresh o riconnessione), manda subito initData e punteggi al singolo giocatore
     if (rooms[roomName].gameStarted) {
       if (playerData) {
         socket.emit("initData", {
@@ -44,7 +44,22 @@ module.exports = (io, socket, rooms) => {
           players: rooms[roomName].players,
           playersSummary: buildPlayersSummary(rooms[roomName])
         });
+
+        if (rooms[roomName].gameState && rooms[roomName].gameState.punteggi) {
+          socket.emit("updateScores", {
+            players: rooms[roomName].players,
+            punteggi: rooms[roomName].gameState.punteggi
+          });
+        }
+
+        // Se è il turno di chiamata del Banco, rimanda il valoreNegato
+        if (gameState.giroChiamata && gameState.turnoAttualeId === playerCode && gameState.bancoId === playerCode) {
+          if (gameState.valoreNegato !== undefined && gameState.valoreNegato !== null) {
+            socket.emit("chiamataBanco", { valoreNegato: gameState.valoreNegato });
+          }
+        }
       }
+      socketMessaggio(roomName, `${player.playerName} si è riconnesso`);
       return;
     }
 
@@ -200,18 +215,18 @@ module.exports = (io, socket, rooms) => {
     }).length;
 
     if (connectedCount === 0) {
-      console.log(`[Tavolo ${roomName}] Tutti i giocatori sono disconnessi. Timer di 10 secondi avviato per cancellazione stanza.`);
+      console.log(`[Tavolo ${roomName}] Tutti i giocatori sono disconnessi. Timer di 60 secondi avviato per cancellazione stanza.`);
       if (room.emptyRoomTimer) clearTimeout(room.emptyRoomTimer);
       room.emptyRoomTimer = setTimeout(() => {
         const stillConnected = room.players.some(p => p.socketId && io.sockets.sockets.has(p.socketId));
         if (!stillConnected) {
           if (room.turnTimer) clearTimeout(room.turnTimer);
           delete rooms[roomName];
-          console.log(`[Tavolo ${roomName}] Stanza eliminata definitivamente per inattività totale (10s).`);
+          console.log(`[Tavolo ${roomName}] Stanza eliminata definitivamente per inattività totale (60s).`);
         } else {
           room.emptyRoomTimer = null;
         }
-      }, 10000);
+      }, 60000);
     } else {
       socketMessaggio(roomName, `${playerName} si è disconnesso`);
     }

@@ -4,6 +4,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
 
 :root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
   --bg-main: #0c0d12;
   --bg-glass: rgba(18, 20, 28, 0.82);
   --bg-card-panel: rgba(24, 27, 38, 0.94);
@@ -18,6 +22,13 @@
   --ease-scenic: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 * { 
   box-sizing: border-box; 
   margin: 0; 
@@ -30,6 +41,7 @@ body {
   height: 100vh;
   height: 100dvh;
   width: 100vw;
+  width: 100dvw;
   background: var(--bg-main);
   background-image: 
     radial-gradient(circle at 15% 15%, rgba(35, 42, 60, 0.5) 0%, transparent 50%),
@@ -41,6 +53,8 @@ body {
   overflow: hidden;
   color: var(--text-main);
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* ==========================================================================
@@ -51,15 +65,17 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 52px;
-  background: rgba(12, 13, 18, 0.85);
+  height: calc(52px + var(--sat));
+  padding-top: var(--sat);
+  padding-left: max(14px, var(--sal));
+  padding-right: max(14px, var(--sar));
+  background: rgba(12, 13, 18, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
   z-index: 60;
 }
 
@@ -169,8 +185,8 @@ body {
 .game-container {
   position: relative;
   width: 100%;
-  height: calc(100dvh - 52px);
-  margin-top: 52px;
+  height: calc(100dvh - 52px - var(--sat));
+  margin-top: calc(52px + var(--sat));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -221,25 +237,28 @@ body {
 /* NOTIFICA TOAST CENTRALE AL TAVOLO */
 .table-toast {
   position: absolute;
-  top: 15%;
-  background: rgba(14, 16, 24, 0.9);
+  top: 14%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background: rgba(14, 16, 24, 0.94);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-gold);
   color: #fff;
-  padding: 8px 18px;
+  padding: 7px 16px;
   border-radius: 24px;
-  font-family: 'Outfit', sans-serif;
-  font-size: clamp(0.8rem, 2vmin, 0.95rem);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(0.78rem, 2vmin, 0.92rem);
   font-weight: 700;
   text-align: center;
   z-index: 25;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(241, 196, 15, 0.3);
-  animation: toastFloat 0.5s var(--ease-scenic);
+  animation: toastFloat 0.45s var(--ease-scenic);
   pointer-events: none;
-  max-width: 80%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: min(88%, 340px);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 /* CARTE GIOCATE SUL TAVOLO */
@@ -408,7 +427,7 @@ body {
    ========================================================================== */
 .player.me {
   position: absolute;
-  bottom: 12px;
+  bottom: max(10px, var(--sab));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -470,7 +489,7 @@ body {
 .bidding-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 11, 16, 0.55);
+  background: rgba(10, 11, 16, 0.65);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
@@ -478,7 +497,9 @@ body {
   justify-content: center;
   z-index: 100;
   /* Spazio in basso per lasciare visibile la mano del giocatore */
-  padding-bottom: clamp(110px, 22vh, 180px);
+  padding-bottom: clamp(90px, 18vh, 160px);
+  padding-left: max(16px, var(--sal));
+  padding-right: max(16px, var(--sar));
   animation: fadeIn 0.35s var(--ease-scenic);
 }
 
@@ -487,8 +508,10 @@ body {
   background: var(--bg-card-panel);
   border: 1px solid var(--border-gold);
   border-radius: 24px;
-  padding: 24px 22px 18px;
-  width: min(90vw, 440px);
+  padding: 22px 20px 16px;
+  width: min(92vw, 440px);
+  max-height: 80vh;
+  overflow-y: auto;
   text-align: center;
   box-shadow: 
     0 25px 60px rgba(0, 0, 0, 0.85), 
@@ -883,8 +906,8 @@ tr:hover { background: rgba(255, 255, 255, 0.05); }
 }
 
 @keyframes toastFloat {
-  0% { opacity: 0; transform: translateY(15px) scale(0.95); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, 15px) scale(0.95); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
 /* UTILITIES */
@@ -893,12 +916,13 @@ tr:hover { background: rgba(255, 255, 255, 0.05); }
 }
 
 /* ==========================================================================
-   OTTIMIZZAZIONE MOBILE (SMARTPHONE E PORTRAIT)
+   OTTIMIZZAZIONE MOBILE (SMARTPHONE PORTRAIT)
    ========================================================================== */
 @media (max-width: 640px) {
   .top-hud {
-    padding: 0 10px;
-    height: 48px;
+    padding-left: max(10px, var(--sal));
+    padding-right: max(10px, var(--sar));
+    height: calc(46px + var(--sat));
   }
   
   .hud-btn .btn-text {
@@ -910,49 +934,165 @@ tr:hover { background: rgba(255, 255, 255, 0.05); }
   }
   
   .game-container {
-    height: calc(100dvh - 48px);
-    margin-top: 48px;
+    height: calc(100dvh - 46px - var(--sat));
+    margin-top: calc(46px + var(--sat));
   }
 
   .table {
-    width: min(78vmin, 380px);
-    height: min(78vmin, 380px);
+    width: min(76vmin, 360px);
+    height: min(76vmin, 360px);
   }
 
   .player.me {
-    bottom: 6px;
+    bottom: max(6px, var(--sab));
   }
 }
 
-@media (max-height: 540px) {
+/* ==========================================================================
+   OTTIMIZZAZIONE MOBILE LANDSCAPE (IPHONE E ANDROID IN ORIZZONTALE)
+   ========================================================================== */
+@media (orientation: landscape) and (max-height: 520px) {
+  .top-hud {
+    height: calc(38px + var(--sat));
+    padding-top: var(--sat);
+    padding-left: max(12px, var(--sal));
+    padding-right: max(12px, var(--sar));
+  }
+  
+  .hud-pill {
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+  
+  .turn-banner {
+    padding: 3px 10px 5px;
+    font-size: 0.75rem;
+  }
+  
+  .hud-btn {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+  .hud-btn .btn-text {
+    display: none;
+  }
+
+  .game-container {
+    height: calc(100dvh - 38px - var(--sat));
+    margin-top: calc(38px + var(--sat));
+  }
+
+  .table {
+    width: min(52vmin, 220px);
+    height: min(52vmin, 220px);
+    border-width: 8px;
+  }
+
+  .table-toast {
+    top: 8%;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    max-width: 88%;
+  }
+
+  #table-cards {
+    gap: 6px;
+  }
+
+  .table-card-wrapper .card {
+    width: clamp(34px, 5.5vmin, 44px);
+    height: clamp(50px, 8vmin, 66px);
+  }
+
+  .table-card-owner {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+
+  .player.opponent .card {
+    width: clamp(24px, 3.8vmin, 32px);
+    height: clamp(36px, 5.8vmin, 48px);
+    margin-left: -14px;
+  }
+
+  .player.opponent .player-pill {
+    padding: 2px 6px;
+    font-size: 9.5px;
+    gap: 3px;
+  }
+
+  .player.opponent .player-name {
+    max-width: 60px;
+  }
+
+  .player.me {
+    bottom: max(3px, var(--sab));
+    gap: 3px;
+  }
+
+  .player.me .player-pill {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  .player.me .card {
+    width: clamp(38px, 6.2vmin, 50px);
+    height: clamp(56px, 9.4vmin, 74px);
+    margin-left: clamp(-16px, -2vmin, -10px);
+  }
+
+  .player.me.my-turn .card:hover {
+    transform: translateY(-12px) scale(1.1);
+  }
+
   .bidding-overlay {
-    padding-bottom: 75px;
+    padding-bottom: max(6px, var(--sab));
+    padding-top: calc(40px + var(--sat));
+    align-items: flex-start;
   }
+
   .bidding-card {
-    padding: 12px 18px 10px;
-    width: min(92vw, 420px);
+    padding: 10px 14px 8px;
+    max-height: calc(100dvh - 46px);
+    width: min(94vw, 420px);
   }
-  .bidding-header h3 {
-    font-size: 1.05rem;
+
+  .bidding-header .bidding-icon {
+    font-size: 1.1rem;
     margin-bottom: 2px;
   }
+
+  .bidding-header h3 {
+    font-size: 0.92rem;
+    margin-bottom: 2px;
+  }
+
   .bidding-header p {
-    font-size: 0.8rem;
-    margin-bottom: 10px;
+    font-size: 0.7rem;
+    margin-bottom: 6px;
   }
+
+  .bidding-chips {
+    gap: 6px;
+    margin: 6px 0;
+  }
+
   .bidding-chip {
-    width: 38px;
-    height: 38px;
-    font-size: 0.95rem;
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
   }
+
   .bidding-notice {
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    margin-top: 6px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    margin-top: 4px;
   }
+
   .bidding-view-cards-btn {
-    margin-top: 8px;
-    padding: 5px 12px;
-    font-size: 0.75rem;
+    margin-top: 4px;
+    padding: 3px 8px;
+    font-size: 0.68rem;
   }
 }

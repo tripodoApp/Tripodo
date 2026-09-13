@@ -15,7 +15,7 @@ function initPlayer(idPlayer, numberPlayers, index, carte) {
     haChiamato: false,
     currentRound: 1,
     currentRoundHand: 0,
-    totalRound: 40 / numberPlayers,
+    totalRound: Math.floor(40 / numberPlayers),
     index: index
   }
 
@@ -161,25 +161,24 @@ function fineRound(room) {
 
   const carte = dividiCarte(currentRound, room.players);
   room.playerState.forEach(player => {
-    player.cardsHands = carte[`${player.idPlayer}`];
+    player.cardsHands = carte[`${player.idPlayer}`] || [];
   });
 
   aggiungiIdCarte(room.playerState);
-  room.players.forEach((playerId, index) => {
-    room.playerState[index].cardsHands = carte[`${playerId.playerId}`]
-  });
-
 
   setBancoSuccessivo(room);
   prossimoTurno(room);
-
-
-
 }
 
 function calcoloPunteggio(playerState, gameState) {
 
   playerState.forEach(player => {
+    if (!gameState.punteggi[player.idPlayer]) {
+      gameState.punteggi[player.idPlayer] = [];
+    }
+    if (!player.punteggio) {
+      player.punteggio = [];
+    }
 
     const cartePrese = player.numeroPrese;
     const numeroChiamata = player.numeroChiamata;
